@@ -1,6 +1,6 @@
 checkService:
   switch:
-    - condition: ${incoming.body.list[0] == "#rahvaAlgatus"}
+    - condition: ${incoming.body.list[0] == "#initiativeEvent"}
       next: prepareRequest
   next: noService
 
@@ -120,4 +120,4 @@ noService:
   next: end
 
 # For testing:
-# curl -X POST -H "Content-Type: application/json" -d '{"list": ["#rahvaAlgatus"]}' http://localhost:8080/rahvaalgatus
+# curl -X POST -H "Content-Type: application/json" -d '{"list": ["#initiativeEvent"]}' http://localhost:8080/rahvaalgatus
