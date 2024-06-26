@@ -1,9 +1,3 @@
-checkService:
-  switch:
-    - condition: ${incoming.body.list[0] === "#riigikoguIsikuKohalolu"}
-      next: prepareRequest
-  next: noService
-
 prepareRequest:
   assign:
     currentYear: ${new Date().getFullYear()}
@@ -16,7 +10,12 @@ prepareRequest:
 makeAPIRequest:
   call: http.get
   args:
-    url: "https://api.riigikogu.ee/api/statistics/participations/plenary?endDate=${endDate}&startDate=${startDate}&lang=${lang}"
+    url: "https://api.riigikogu.ee/api/statistics/participations/plenary"
+    query:
+      startDate: ${startDate}
+      endDate: ${endDate}
+      memberName: ${memberName}
+      lang: ${lang}
     headers:
       accept: "application/json"
   result: kohaloluData
@@ -25,35 +24,17 @@ makeAPIRequest:
 
 filterMember:
   assign:
-    memberData: ${kohaloluData.response.body.find(member => member.fullName === memberName)}
-  next: checkMemberExists
-
-checkMemberExists:
-  switch:
-    - condition: ${memberData !== undefined && memberData !== null}
-      next: returnResult
-  next: memberNotFound
+    memberData: ${kohaloluData.response.body.filter(member => member.fullName === memberName)[0]}
+  next: returnResult
 
 returnResult:
   return: ${memberData.fullName + " on olnud " + currentYear + " aastal kohal " + memberData.participated + " korda ja puudunud " + memberData.absent + " korda."}
-  next: end
-
-memberNotFound:
-  return: "Error: Member not found."
   next: end
 
 returnError:
   return: "Error: failed to get participation data."
   next: end
 
-noService:
-  return: "${incoming.body.list[0]}, POLE TEENUST"
-  status: 400
-  next: end
-
-
 # For testing:
-# Correct response expected
 # curl -X POST -H "Content-Type: application/json" -d '{"list": ["#riigikoguIsikuKohalolu", "Mart Helme"]}' http://localhost:8080/riigikogu-kohalolu-kindel-isik
-# Error resppnse excpected
-# curl -X POST -H "Content-Type: application/json" -d '{"list": ["#riigikoguIsikuKohalolu", "Yoko Lender"]}' http://localhost:8080/riigikogu-kohalolu-kindel-isik
+# curl -X POST -H "Content-Type: application/json" -d '{"list": ["#riigikoguIsikuKohalolu", "Yoko Alender"]}' http://localhost:8080/riigikogu-kohalolu-kindel-isik
