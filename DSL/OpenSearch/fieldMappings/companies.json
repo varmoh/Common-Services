@@ -1,0 +1,36 @@
+{
+  "mappings": {
+    "properties": {
+      "registry_code": {
+        "type": "text"
+      },
+      "name": {
+        "type": "string"
+      },
+      "type": {
+        "type": "text"
+      },
+      "vat_register": {
+        "type": "text"
+      },
+      "emtak_field_of_activity": {
+        "type": "text"
+      },
+      "county": {
+        "type": "text"
+      },
+      "national_taxes": {
+        "type": "text"
+      },
+      "labor_taxes_and_payments": {
+        "type": "text"
+      },
+      "turnover": {
+        "type": "text"
+      },
+      "workers": {
+        "type": "text"
+      }
+    }
+  }
+}

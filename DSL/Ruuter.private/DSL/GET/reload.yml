@@ -1,0 +1,13 @@
+declaration:
+  call: declare
+  version: 0.1
+  description: "Decription placeholder for 'RELOAD'"
+  method: post
+  accepts: json
+  returns: json
+  namespace: analytics
+
+ok:
+  reloadDsl: true
+  return: ""
+  next: end
