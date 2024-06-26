@@ -1,9 +1,3 @@
-checkService:
-  switch:
-    - condition: ${incoming.body.list[0] == "#initiativeEvent"}
-      next: prepareRequest
-  next: noService
-
 prepareRequest:
   assign:
     order: "-occurredAt"
@@ -15,7 +9,11 @@ prepareRequest:
 makeAPIRequest:
   call: http.get
   args:
-    url: "https://rahvaalgatus.ee/initiative-events?order=${order}&distinct=${distinct}&limit=${limit}"
+    url: "https://rahvaalgatus.ee/initiative-events"
+    query:
+      order: ${order}
+      distinct: ${distinct}
+      limit: ${limit}
     headers:
       accept: ${acceptHeader}
   result: eventsData
@@ -113,11 +111,3 @@ returnResult:
 returnError:
   return: "Error: failed to get initiative details."
   next: end
-
-noService:
-  return: "${incoming.body.list[0]} - POLE TEENUST"
-  status: 400
-  next: end
-
-# For testing:
-# curl -X POST -H "Content-Type: application/json" -d '{"list": ["#initiativeEvent"]}' http://localhost:8080/rahvaalgatus
