@@ -1,9 +1,3 @@
-checkService:
-  switch:
-    - condition: ${incoming.body.list[0] === "#recentVoting"}
-      next: prepareRequest
-  next: noService
-
 prepareRequest:
   assign:
     lang: "ET"
@@ -12,7 +6,9 @@ prepareRequest:
 makeAPIRequest:
   call: http.get
   args:
-    url: "https://api.riigikogu.ee/api/votings/last?lang=${lang}"
+    url: "https://api.riigikogu.ee/api/votings/last"
+    query:
+      lang: ${lang}
     headers:
       accept: "application/json"
   result: votingData
@@ -36,11 +32,3 @@ returnResult:
 returnError:
   return: "Error: failed to get recent votings data."
   next: end
-
-noService:
-  return: "${incoming.body.list[0]}, POLE TEENUST"
-  status: 400
-  next: end
-
-# For testing:
-# curl -X POST -H "Content-Type: application/json" -d '{"list": ["#recentVoting"]}' http://localhost:8080/riigikogu-viimane-haaletus
