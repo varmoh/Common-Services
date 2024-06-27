@@ -1,0 +1,10 @@
+{
+    "employees": [
+    {{#each hits}}
+            {
+              "employees": {{ _source.workers }},
+              "name": "{{ _source.name }}"
+            }{{#unless @last}},{{/unless}}
+    {{/each}}
+    ]
+}

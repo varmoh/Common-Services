@@ -1,7 +1,7 @@
 declaration:
   call: declare
   version: 0.1
-  description: "Decription placeholder for 'Search Companies'"
+  description: "Search Companies by name"
   method: post
   accepts: json
   returns: json
@@ -27,18 +27,18 @@ getCompaniesWithName:
     body:
       id: "company-with-name"
       params: ${params}
-  result: companiesResult
+  result: res
 
-mapCompaniesData:
+mapData:
   call: http.post
   args:
     url: "[#DMAPPER]/hbs/common-services/get_company_with_name"
     headers:
       type: "json"
     body:
-      hits: ${companiesResult.response.body.hits.hits}
-  result: companiesData
+      hits: ${res.response.body.hits.hits}
+  result: mappedData
 
 return_result:
-  return: ${companiesData.response.body}
+  return: ${mappedData.response.body}
   next: end
