@@ -1,7 +1,7 @@
 declaration:
   call: declare
   version: 0.1
-  description: "Gets Companies Employees"
+  description: "Gets Companies National Taxes"
   method: post
   accepts: json
   returns: json
@@ -37,14 +37,14 @@ getWithCode:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
       id: "company-with-code"
-      params: { registry_code: "${params.registry_code}", field: "workers" }
+      params: { registry_code: "${params.registry_code}", field: "national_taxes" }
   result: res
   next: mapCodeData
 
 mapCodeData:
   call: http.post
   args:
-    url: "[#DMAPPER]/hbs/common-services/get_employees_with_code"
+    url: "[#DMAPPER]/hbs/common-services/get_national_taxes_with_code"
     headers:
       type: "json"
     body:
@@ -54,12 +54,12 @@ mapCodeData:
 
 checkMappedData:
   switch:
-    - condition: ${codeMappedData.response.body.employees.length > 0}
+    - condition: ${codeMappedData.response.body.national_taxes.length > 0}
       next: return_code_result
   next: return_no_companies_found
 
 return_code_result:
-  return: ${codeMappedData.response.body.employees[0]}
+  return: ${codeMappedData.response.body.national_taxes[0]}
   next: end
 
 return_no_companies_found:
@@ -72,7 +72,7 @@ getWithCounty:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
       id: "companies-with-county"
-      params: { county: "${params.county}", field: "workers" }
+      params: { county: "${params.county}", field: "national_taxes" }
   result: res
   next: mapCountyData
 
@@ -97,7 +97,7 @@ getAll:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
       id: "companies"
-      params: { field: "workers" }
+      params: { field: "national_taxes" }
   result: res
   next: mapAllData
 

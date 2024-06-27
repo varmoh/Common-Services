@@ -4,7 +4,7 @@
     "source": {
       "size": 0,
       "aggs": {
-        "workers": {
+        "result": {
           "filter": {
             "term": {
               "county.keyword": "{{county}}"
@@ -13,7 +13,7 @@
           "aggs": {
             "count": {
               "sum": {
-                "field": "workers"
+                "field": "{{field}}"
               }
             }
           }
@@ -21,7 +21,8 @@
       }
     },
     "params": {
-      "county": ""
+      "county": "",
+      "field": ""
     }
   }
 }

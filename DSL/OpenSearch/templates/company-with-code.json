@@ -2,7 +2,7 @@
   "script": {
     "lang": "mustache",
     "source": {
-      "_source": ["workers", "name"],
+      "_source": ["{{field}}", "name"],
       "size": 1,
       "query": {
         "bool": {
@@ -18,7 +18,8 @@
       }
     },
     "params": {
-      "registry_code": ""
+      "registry_code": "",
+      "field": ""
     }
   }
 }
