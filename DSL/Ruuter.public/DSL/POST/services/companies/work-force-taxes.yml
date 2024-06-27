@@ -1,0 +1,117 @@
+declaration:
+  call: declare
+  version: 0.1
+  description: "Gets Companies Paid Work Force Taxes"
+  method: post
+  accepts: json
+  returns: json
+  namespace: common-services
+  allowlist:
+    params:
+      - field: registry_code
+        type: string
+        description: "Parameter 'registry_code'"
+      - field: county
+        type: string
+        description: "Parameter 'county'"
+    headers:
+      - field: cookie
+        type: string
+        description: "Cookie field"
+
+assign_values:
+  assign:
+    params: ${incoming.body}
+
+checkForParams:
+  switch:
+    - condition: ${params.registry_code != null}
+      next: getWithCode
+    - condition: ${params.county != null}
+      next: getWithCounty
+  next: getAll
+
+getWithCode:
+  call: http.post
+  args:
+    url: "[#OPENSEARCH]/companies/_search/template"
+    body:
+      id: "company-with-code"
+      params: { registry_code: "${params.registry_code}", field: "labor_taxes_and_payments" }
+  result: res
+  next: mapCodeData
+
+mapCodeData:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/hbs/common-services/get_work_force_taxes_with_code"
+    headers:
+      type: "json"
+    body:
+      hits: ${res.response.body.hits.hits}
+  result: codeMappedData
+  next: checkMappedData
+
+checkMappedData:
+  switch:
+    - condition: ${codeMappedData.response.body.work_force_taxes.length > 0}
+      next: return_code_result
+  next: return_no_companies_found
+
+return_code_result:
+  return: ${codeMappedData.response.body.work_force_taxes[0]}
+  next: end
+
+return_no_companies_found:
+  return: "No companies found"
+  next: end
+
+getWithCounty:
+  call: http.post
+  args:
+    url: "[#OPENSEARCH]/companies/_search/template"
+    body:
+      id: "companies-with-county"
+      params: { county: "${params.county}", field: "labor_taxes_and_payments" }
+  result: res
+  next: mapCountyData
+
+mapCountyData:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/hbs/common-services/get_total_with_county"
+    headers:
+      type: "json"
+    body:
+      aggregations: ${res.response.body.aggregations}
+  result: countyMappedData
+  next: return_county_result
+
+return_county_result:
+  return: ${countyMappedData.response.body}
+  next: end
+
+getAll:
+  call: http.post
+  args:
+    url: "[#OPENSEARCH]/companies/_search/template"
+    body:
+      id: "companies"
+      params: { field: "labor_taxes_and_payments" }
+  result: res
+  next: mapAllData
+
+mapAllData:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/hbs/common-services/get_total"
+    headers:
+      type: "json"
+    body:
+      aggregations: ${res.response.body.aggregations}
+  result: allMappedData
+  next: return_all_result
+
+return_all_result:
+  return: ${allMappedData.response.body}
+  next: end
