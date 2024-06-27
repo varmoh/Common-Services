@@ -26,6 +26,19 @@
         "type": "float",
         "target_field": "national_taxes"
       }
+    },
+    {
+      "script": {
+        "source": "ctx.labor_taxes_and_payments = (ctx.labor_taxes_and_payments.length() > 0 ? ctx.labor_taxes_and_payments : '0').replace(',', '.')",
+        "lang": "painless"
+      }
+    },
+    {
+      "convert": {
+        "field": "labor_taxes_and_payments",
+        "type": "float",
+        "target_field": "labor_taxes_and_payments"
+      }
     }
   ]
 }
