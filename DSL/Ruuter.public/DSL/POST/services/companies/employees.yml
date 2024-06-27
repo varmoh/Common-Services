@@ -1,0 +1,116 @@
+declaration:
+  call: declare
+  version: 0.1
+  description: "Gets Companies Employees"
+  method: post
+  accepts: json
+  returns: json
+  namespace: common-services
+  allowlist:
+    params:
+      - field: registry_code
+        type: string
+        description: "Parameter 'registry_code'"
+      - field: county
+        type: string
+        description: "Parameter 'county'"
+    headers:
+      - field: cookie
+        type: string
+        description: "Cookie field"
+
+assign_values:
+  assign:
+    params: ${incoming.body}
+
+checkForParams:
+  switch:
+    - condition: ${params.registry_code != null}
+      next: getEmployeesWithCode
+    - condition: ${params.county != null}
+      next: getEmployeesWithCounty
+  next: getEmployees
+
+getEmployeesWithCode:
+  call: http.post
+  args:
+    url: "[#OPENSEARCH]/companies/_search/template"
+    body:
+      id: "company-employees-with-code"
+      params: ${params}
+  result: res
+  next: mapEmployeesCodeData
+
+mapEmployeesCodeData:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/hbs/common-services/get_employees_with_code"
+    headers:
+      type: "json"
+    body:
+      hits: ${res.response.body.hits.hits}
+  result: codeMappedData
+  next: checkMappedData
+
+checkMappedData:
+  switch:
+    - condition: ${codeMappedData.response.body.employees.length > 0}
+      next: return_employee_code_result
+  next: return_no_companies_found
+
+return_employee_code_result:
+  return: ${codeMappedData.response.body.employees[0]}
+  next: end
+
+return_no_companies_found:
+  return: "No companies found"
+  next: end
+
+getEmployeesWithCounty:
+  call: http.post
+  args:
+    url: "[#OPENSEARCH]/companies/_search/template"
+    body:
+      id: "companies-employees-with-county"
+      params: ${params}
+  result: res
+  next: mapEmployeesCountyData
+
+mapEmployeesCountyData:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/hbs/common-services/get_employees_with_county"
+    headers:
+      type: "json"
+    body:
+      aggregations: ${res.response.body.aggregations}
+  result: countyMappedData
+  next: return_employee_county_result
+
+return_employee_county_result:
+  return: ${countyMappedData.response.body}
+  next: end
+
+getEmployees:
+  call: http.post
+  args:
+    url: "[#OPENSEARCH]/companies/_search/template"
+    body:
+      id: "companies-employees"
+  result: res
+  next: mapEmployeesData
+
+mapEmployeesData:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/hbs/common-services/get_employees"
+    headers:
+      type: "json"
+    body:
+      aggregations: ${res.response.body.aggregations}
+  result: employeesMappedData
+  next: return_employees_result
+
+return_employees_result:
+  return: ${employeesMappedData.response.body}
+  next: end

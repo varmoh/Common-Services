@@ -1,0 +1,27 @@
+{
+  "script": {
+    "lang": "mustache",
+    "source": {
+      "size": 0,
+      "aggs": {
+        "workers": {
+          "filter": {
+            "term": {
+              "county.keyword": "{{county}}"
+            }
+          },
+          "aggs": {
+            "count": {
+              "sum": {
+                "field": "workers"
+              }
+            }
+          }
+        }
+      }
+    },
+    "params": {
+      "county": ""
+    }
+  }
+}

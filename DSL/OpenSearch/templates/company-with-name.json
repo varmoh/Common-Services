@@ -3,7 +3,7 @@
     "lang": "mustache",
     "source": {
       "_source": ["registry_code", "name"],
-      "size": 10000,
+      "size": 10,
       "query": {
         "match": {
           "name": {

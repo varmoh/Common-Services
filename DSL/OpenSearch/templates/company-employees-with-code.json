@@ -1,0 +1,24 @@
+{
+  "script": {
+    "lang": "mustache",
+    "source": {
+      "_source": ["workers", "name"],
+      "size": 1,
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "query_string": {
+                "query": "{{registry_code}}",
+                "fields": ["registry_code"]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "params": {
+      "registry_code": ""
+    }
+  }
+}

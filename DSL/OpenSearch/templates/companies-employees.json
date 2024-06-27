@@ -1,0 +1,15 @@
+{
+  "script": {
+    "lang": "mustache",
+    "source": {
+      "size": 0,
+      "aggs": {
+        "workers": {
+          "sum": {
+            "field": "workers"
+          }
+        }
+      }
+    }
+  }
+}
