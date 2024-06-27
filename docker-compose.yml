@@ -45,8 +45,8 @@ services:
     cpus: "0.5"
     mem_limit: "512M"
 
-  data-mapper:
-    container_name: data-mapper
+  dmapper:
+    container_name: dmapper
     image: data-mapper
     environment:
       - PORT=3000
@@ -54,6 +54,7 @@ services:
     volumes:
       - ./DSL:/data
       - ./DSL/DMapper/hbs:/workspace/app/views/common-services
+      - ./services:/data/OpenSearch/services
     ports:
       - 3000:3000
     networks:
@@ -64,18 +65,19 @@ services:
     image: cron-manager
     volumes:
       - ./DSL/CronManager:/DSL
+      - ./services:/app/services
     environment:
       - server.port=9010
     ports:
-      - 9010:8080
+      - 9010:9010
     networks:
       - bykstack
 
-  opensearch-node:
+  opensearch:
     image: opensearchproject/opensearch:2.11.1
-    container_name: opensearch-node
+    container_name: opensearch
     environment:
-      - node.name=opensearch-node
+      - node.name=opensearch
       - discovery.seed_hosts=opensearch
       - discovery.type=single-node
       - bootstrap.memory_lock=true
