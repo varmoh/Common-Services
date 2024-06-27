@@ -23,7 +23,7 @@
     {
       "convert": {
         "field": "national_taxes",
-        "type": "float",
+        "type": "double",
         "target_field": "national_taxes"
       }
     },
@@ -36,8 +36,21 @@
     {
       "convert": {
         "field": "labor_taxes_and_payments",
-        "type": "float",
+        "type": "double",
         "target_field": "labor_taxes_and_payments"
+      }
+    },
+    {
+      "script": {
+        "source": "ctx.turnover = (ctx.turnover.length() > 0 ? ctx.turnover : '0').replace(',', '.')",
+        "lang": "painless"
+      }
+    },
+    {
+      "convert": {
+        "field": "turnover",
+        "type": "double",
+        "target_field": "turnover"
       }
     }
   ]
