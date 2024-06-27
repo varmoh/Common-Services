@@ -1,0 +1,31 @@
+{
+  "description": "Pipeline that contains processors for companies",
+  "processors": [
+    {
+      "script": {
+        "source": "ctx.workers = (ctx.workers.length() > 0 ? ctx.workers : '0')",
+        "lang": "painless"
+      }
+    },
+    {
+      "convert": {
+        "field": "workers",
+        "type": "integer",
+        "target_field": "workers"
+      }
+    },
+    {
+      "script": {
+        "source": "ctx.national_taxes = (ctx.national_taxes.length() > 0 ? ctx.national_taxes : '0').replace(',', '.')",
+        "lang": "painless"
+      }
+    },
+    {
+      "convert": {
+        "field": "national_taxes",
+        "type": "float",
+        "target_field": "national_taxes"
+      }
+    }
+  ]
+}

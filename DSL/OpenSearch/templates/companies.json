@@ -4,12 +4,15 @@
     "source": {
       "size": 0,
       "aggs": {
-        "workers": {
+        "result": {
           "sum": {
-            "field": "workers"
+            "field": "{{field}}"
           }
         }
       }
+    },
+    "params": {
+      "field": ""
     }
   }
 }
