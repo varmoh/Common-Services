@@ -34,7 +34,3 @@ returnResult:
 returnError:
   return: "Error: failed to get participation data."
   next: end
-
-# For testing:
-# curl -X POST -H "Content-Type: application/json" -d '{"list": ["#riigikoguIsikuKohalolu", "Mart Helme"]}' http://localhost:8080/riigikogu-kohalolu-kindel-isik
-# curl -X POST -H "Content-Type: application/json" -d '{"list": ["#riigikoguIsikuKohalolu", "Yoko Alender"]}' http://localhost:8080/riigikogu-kohalolu-kindel-isik
