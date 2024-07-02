@@ -1,1 +1,45 @@
+prepareRequest:
+  assign:
+    currentYear: ${new Date().getFullYear()}
+    start: ${currentYear + "-01-01"}
+    end: ${currentYear + "-12-31"}
+  next: makeAPIRequest
+
+makeAPIRequest:
+  call: http.get
+  limit: 2048
+  args:
+    url: "https://api.riigikogu.ee/api/votings"
+    query:
+      lang: "ET"
+      endDate: ${end}
+      startDate: ${start}
+    headers:
+      accept: "application/json"
+  result: votingsData
+  error: returnError
+  next: extractVoting
+
+extractVoting:
+  assign:
+    recentVotings: ${votingsData.response.body.slice(0, 50)}
+  next: votingDataFormatting
+
+votingDataFormatting:
+  assign:
+    votingDetails: ${recentVotings.flatMap(v => v.votings).filter(v => v.type.value === "Avalik" && v.relatedDocument).sort((v1, v2) => v1.startDateTime <= v2.startDateTime).slice(0,20)}
+  next: returnResult
+
+returnResult:
+  return: ${"Viimased viis Riigikogu hääletust- " + votingDetails[0].relatedDocument.title + ". Poolt-" + votingDetails[0].inFavor + ". Vastu-" + votingDetails[0].against + ". " + votingDetails[1].relatedDocument.title + ". Poolt-" + votingDetails[1].inFavor + ". Vastu-" + votingDetails[1].against + ". " + votingDetails[2].relatedDocument.title + ". Poolt-" + votingDetails[2].inFavor+ ". Vastu-" + votingDetails[2].against + ". " + votingDetails[3].relatedDocument.title + ". Poolt-" + votingDetails[3].inFavor + ". Vastu-" + votingDetails[3].against + ". " + votingDetails[4].relatedDocument.title + ". Poolt-" + votingDetails[4].inFavor + ". Vastu-" + votingDetails[4].against}
+  next: end
+
+returnError:
+  return: "Error: failed to get recent votings data."
+  next: end
+
+noService:
+  return: "${incoming.body.list[0]}, POLE TEENUST"
+  status: 400
+  next: end
 
