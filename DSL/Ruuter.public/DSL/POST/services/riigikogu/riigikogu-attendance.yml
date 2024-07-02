@@ -1,0 +1,36 @@
+prepareRequest:
+  assign:
+    currentYear: ${new Date().getFullYear()}
+    startDate: ${currentYear + "-01-01"}
+    endDate: ${currentYear + "-12-31"}
+    lang: "ET"
+    memberName: ${incoming.body.memberName}
+  next: makeAPIRequest
+
+makeAPIRequest:
+  call: http.get
+  args:
+    url: "https://api.riigikogu.ee/api/statistics/participations/plenary"
+    query:
+      startDate: ${startDate}
+      endDate: ${endDate}
+      memberName: ${memberName}
+      lang: ${lang}
+    headers:
+      accept: "application/json"
+  result: kohaloluData
+  error: returnError
+  next: filterMember
+
+filterMember:
+  assign:
+    memberData: ${kohaloluData.response.body.filter(member => member.fullName === memberName)[0]}
+  next: returnResult
+
+returnResult:
+  return: ${memberData.fullName + " on olnud " + currentYear + " aastal kohal " + memberData.participated + " korda ja puudunud " + memberData.absent + " korda."}
+  next: end
+
+returnError:
+  return: "Error: failed to get participation data."
+  next: end
