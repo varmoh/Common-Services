@@ -1,0 +1,11 @@
+{
+    "nimi": {{ keha.nimi }},
+    "sidevahendid": [
+    {{#each keha.yldanmed.sidevahendid.item }}
+        {
+            "liik": {{ liik }},
+            "sisu": {{ sisu }}
+        }
+    {{/each}}
+    ]
+}
