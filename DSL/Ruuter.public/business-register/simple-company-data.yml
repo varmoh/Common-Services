@@ -1,7 +1,7 @@
 declaration:
   call: declare
   version: 0.1
-  description: "Gets contact information for a business from the Business Register"
+  description: "Gets information for a business from the Business Register"
   method: post
   accepts: json
   returns: json
@@ -18,26 +18,26 @@ declaration:
         type: string
         description: "X-Road API password"
 
-getDetailedCompanyData:
+getSimpleCompanyData:
   call: http.post
   args:
-    url: "[#XTR]/ar/detailandmed_v2"
+    url: "[#XTR]/ar/lihtandmed_v3"
     body:
       params: { reg_code: "{$params.reg_code", username: "${params.username}", password: "${params.password}"}
-    result: detailedCompanyData
-    next: mapDetailedCompanyData
+    result: simpleCompanyData
+    next: mapSimpleCompanyData
 
-mapDetailedCompanyData:
+mapSimpleCompanyData:
   call: http.post
   args:
-    url: "[#DMAPPER]/hbs/common-services/get-business-register-detailed-company-data"
+    url: "[#DMAPPER]/hbs/common-services/get-business-register-simple-company-data"
     headers:
       type: "json"
     body:
-      keha: ${detailedCompanyData.response.body.detailandmed_v2Response.keha.ettevotjad.item}
-  result: mappedDetailedCompanyData
-  next: returnDetailedCompanyData
+      keha: ${simpleCompanyData.response.body.lihtandmed_v3Response.keha.ettevotjad.item}
+  result: mappedSimpleCompanyData
+  next: returnSimpleCompanyData
 
-returnDetailedCompanyData:
-  return: ${mappedDetailedCompanyData.response.body}
+returnSimpleCompanyData:
+  return: ${mappedSimpleCompanyData.response.body}
   next: end
