@@ -1,0 +1,37 @@
+declaration:
+  call: declare
+  version: 0.1
+  description: "Gets related persons of a business from the Business Register"
+  method: post
+  accepts: json
+  returns: json
+  namespace: common-services
+  allowlist:
+    params:
+      - field: reg_code
+        type: string
+        description: "Registry code of the requested company"
+
+getRelatedPersons:
+  call: http.post
+  args:
+    url: "[#XTR]/ar/ettevottegaSeotudIsikud_v1"
+    body:
+      params: { reg_code: "{$params.reg_code" }
+    result: relatedPersons
+    next: mapRelatedPersons
+
+mapRelatedPersons:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/hbs/common-services/get-business-register-related-persons"
+    headers:
+      type: "json"
+    body:
+      keha: ${relatedPersons.response.body.ettevottegaSeotudIsikud_v1Response.keha}
+  result: mappedRelatedPersons
+  next: returnRelatedPersons
+
+returnRelatedPersons:
+  return: ${mappedRelatedPersons.response.body}
+  next: end

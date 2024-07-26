@@ -1,0 +1,43 @@
+declaration:
+  call: declare
+  version: 0.1
+  description: "Gets beneficial owners of a business from the Business Register"
+  method: post
+  accepts: json
+  returns: json
+  namespace: common-services
+  allowlist:
+    params:
+      - field: reg_code
+        type: string
+        description: "Registry code of the requested company"
+      - field: username
+        type: string
+        description: "X-Road API username"
+      - field: password
+        type: string
+        description: "X-Road API password"
+
+getBeneficialOwnersData:
+  call: http.post
+  args:
+    url: "[#XTR]/ar/tegelikudKasusaajad_v2"
+    body:
+      params: { reg_code: "{$params.reg_code", username: "${params.username}", password: "${params.password}" }
+    result: beneficialOwnersData
+    next: mapBeneficialOwnersData
+
+mapBeneficialOwnersData:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/hbs/common-services/get-business-register-beneficial-owners"
+    headers:
+      type: "json"
+    body:
+      keha: ${beneficialOwnersData.response.body.tegelikudKasusaajad_v2Response.keha}
+  result: mappedBeneficialOwnersData
+  next: returnBeneficialOwnersData
+
+returnBeneficialOwnersData:
+  return: ${mappedBeneficialOwnersData.response.body}
+  next: end

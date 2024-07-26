@@ -1,0 +1,43 @@
+declaration:
+  call: declare
+  version: 0.1
+  description: "Gets contact information for a business from the Business Register"
+  method: post
+  accepts: json
+  returns: json
+  namespace: common-services
+  allowlist:
+    params:
+      - field: reg_code
+        type: string
+        description: "Registry code of the requested company"
+      - field: username
+        type: string
+        description: "X-Road API username"
+      - field: password
+        type: string
+        description: "X-Road API password"
+
+getDetailedCompanyData:
+  call: http.post
+  args:
+    url: "[#XTR]/ar/detailandmed_v2"
+    body:
+      params: { reg_code: "{$params.reg_code", username: "${params.username}", password: "${params.password}"}
+    result: detailedCompanyData
+    next: mapDetailedCompanyData
+
+mapDetailedCompanyData:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/hbs/common-services/get-business-register-detailed-company-data"
+    headers:
+      type: "json"
+    body:
+      keha: ${detailedCompanyData.response.body.detailandmed_v2Response.keha.ettevotjad.item}
+  result: mappedDetailedCompanyData
+  next: returnDetailedCompanyData
+
+returnDetailedCompanyData:
+  return: ${mappedDetailedCompanyData.response.body}
+  next: end
