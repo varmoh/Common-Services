@@ -15,13 +15,11 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-#      with:
-#        persist-credentials: false  
 
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.8'  # Specify the Python version you need
+        python-version: '3.8'
 
     - name: Install dependencies
       run: |
@@ -29,7 +27,7 @@ jobs:
         pip install requests beautifulsoup4
 
     - name: Run the script
-      run: python3 ./scripts/import_csv.py  # Update the path to your script
+      run: python3 ./scripts/import_csv.py
 
     - name: Configure Git
       run: |

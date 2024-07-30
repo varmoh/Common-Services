@@ -1,4 +1,4 @@
 # Trigger the import CSV workflow
-Last triggered: 30.07.2024 14:08
+# For example - Last triggered: 30.07.2024 14:08
 
-Last triggered: 30.07.2024 14:10
+
