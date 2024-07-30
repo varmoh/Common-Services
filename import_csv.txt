@@ -1,0 +1,3 @@
+# Trigger the import CSV workflow
+Last triggered: 30.07.2024 14:08
+
