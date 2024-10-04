@@ -199,4 +199,5 @@ curl localhost:8080/calendar/national-holidays/find/by-month?month=5
         }
     ]
 }
+
 ```
