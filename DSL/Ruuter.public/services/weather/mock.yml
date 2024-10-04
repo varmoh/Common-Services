@@ -1,0 +1,175 @@
+declaration:
+  call: declare
+  version: 1.0.0
+  description: "MOCK - Gets weather information for locations in EE - estonia"
+  method: post
+  returns: json
+  namespace: common-services
+
+# Assigns key variables for processing the request, including API endpoints.
+assignVariables:
+  assign:
+    countryCode: ${ incoming.params.country_code || "EE" } # defaults to estonian
+    region: ${ incoming.params.region || "tallinn"}
+    gazeteerUrl: "https://inaadress.maaamet.ee/inaadress"
+    publicapiUrl: "https://publicapi.envir.ee/v1/combinedWeatherData"
+    ilmmicroserviceUrl: "https://ilmmicroservice.envir.ee/api/forecasts"
+  next: checkVariables
+
+# Validates the region input to prevent processing errors.
+checkVariables:
+  switch:
+    - condition: ${typeof region !== 'string' || region.trim() === ""}
+      next: error
+  next: getRegionData
+
+# Retrieves geographical data for the specified region from the gazetteer API.
+getRegionData:
+  call: reflect.mock
+  args:
+    request:
+      url: "${gazeteerUrl}/gazetteer?features=EHAK&results=3&address=${region}"
+    response:
+      addresses:
+      - pikkaadress: "Harju maakond, Tallinn"
+        taisaadress: "Harju maakond, Tallinn"
+        ipikkaadress: "Tallinn, Harju maakond"
+        aadresstekst: ""
+        old_aadresstekst: ""
+        leitud_osa: ""
+        unik: "0"
+        onkort: "0"
+        liik: "1"
+        liikVal: "EHAK"
+        tunnus: "784"
+        ads_oid: "OV00000784"
+        adr_id: "2103553"
+        adob_id: "10872516"
+        ehakmk: "37"
+        maakond: "Harju maakond"
+        ehakov: "784"
+        omavalitsus: "Tallinn"
+        ehak: ""
+        asustusyksus: ""
+        kood4: ""
+        vaikekoht: ""
+        kood5: ""
+        liikluspind: ""
+        kood6: ""
+        nimi: ""
+        kood7: ""
+        aadress_nr: ""
+        kood8: ""
+        kort_nr: ""
+        koodaadress: "377840000000000000000000000000000"
+        asum: ""
+        sihtnumber: ""
+        viitepunkt_x: "542228.00"
+        viitepunkt_y: "6588522.00"
+        boundingbox: "517381.64,6579472.30 517381.64,6621928.18 552564.13,6621928.18 552564.13,6579472.30 517381.64,6579472.30"
+        viitepunkt_l: "24.744066"
+        viitepunkt_b: "59.432438"
+        g_boundingbox: "59.3529483249,24.3055582745 59.3529483249,24.9343657531 59.7310958804,24.9343657531 59.7310958804,24.3055582745 59.3529483249,24.3055582745"
+        poid: []
+        tehn_id2: "1344628"
+        primary: "true"
+        kvaliteet: "tapne_lahiaadress"
+        olek: "K"
+  result: regionData
+#  next: assingCoordinates
+
+logregion:
+  log: "regionData: ${regionData.response.body}"
+
+# Extracts longitude and latitude from the region data for further API calls.
+assingCoordinates:
+  assign:
+    longitude: ${regionData.response.body.addresses[0].viitepunkt_l}
+    latitude: ${regionData.response.body.addresses[0].viitepunkt_b}
+  next: getNearestStation
+
+# Finds the nearest weather station using the provided coordinates.
+getNearestStation:
+  call: reflect.mock
+  args:
+    request:
+      url: "${publicapiUrl}/nearestStationByCoordinates?longitude=${longitude}&latitude=${latitude}"
+      headers:
+        type: "application/json"
+    response:
+      entries:
+        entry:
+          - kaugus: "5.9"
+            suund: "0"
+            nimi: "Pirita RJ"
+            id: "199"
+  result: nearestWeatherStation
+  next: assignStationParameters
+
+# Assigns the station ID from the nearest weather station response.
+assignStationParameters:
+  assign:
+    stationId: ${nearestWeatherStation.response.body.entries.entry[0].id}
+  next: getWeather
+
+# Get weather data from selected weather station.
+getWeather:
+  call: reflect.mock
+  args:
+    request:
+      url: "${ilmmicroserviceUrl}/mobileLocationForecast?latitude=${latitude}&longitude=${longitude}&stationId=${stationId}"
+    response:
+      entries:
+        entry:
+          - LaiusMinut: "28"
+            Time: "2024-10-02T15:00:00.000+03:00"
+            paring: "999"
+            wl1ha: "5.000"
+            tuulekylm: "9,4"
+            rhins: null
+            kuumaindeks: null
+            ID: "199"
+            nahtusEng: null
+            tains_aeg: "2024-10-02T12:00:08.000+03:00"
+            Jaam: "Pirita"
+            LaiusSekund: "7.83"
+            wl1ha_bk77: "5.000"
+            uv1ma: null
+            ws1hx: "4.6"
+            pr1hs: null
+            LaiusKraad: "59"
+            wd10ma: "83.000"
+            nahtusRus: null
+            county_ehak: "37"
+            PikkusMinut: "49"
+            wt1ha: "12.800"
+            ametliknimi: "Pirita RJ"
+            tains: "10.4"
+            nahtusEst: null
+            ws10ma: "2.7"
+            ws10ma_aeg: "2024-10-02T12:00:08.000+03:00"
+            PikkusKraad: "24"
+            vis1ma: null
+            qffins: null
+            PikkusSekund: "14.72"
+            pr1hs_aeg: null
+            sunrise: "2024-10-02T05:29:38Z"
+            sunset: "2024-10-02T16:50:43Z"
+            sunrise_eet: "2024-10-02T07:29:38.000+03:00"
+            sunset_eet: "2024-10-02T18:50:43.000+03:00"
+            location:
+              long_address: "Harju maakond, Tallinn, Kesklinna linnaosa"
+              county: "Harju maakond"
+              county_ehak: "37"
+  result: weather
+  next: serveResult
+
+# Weather data as a response to the user (JSON).
+serveResult:
+  return: ${weather.response.body.entries.entry}
+  next: end
+
+# Handles invalid region input with an error message.
+error:
+  return: "Error: Wrong region value - Region required"
+  next: end
