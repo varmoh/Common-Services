@@ -1,10 +1,21 @@
-# Electrc service API - lowest electricity price
+# Electricity service API
 
-## Displays the lowest electricity price
+## Fetch the lowest or highest electricity price for a specific date (default is today)
 **Endpoints**
 ```
 electricity/mock/lowest-price
 electricity/lowest-price
+electricity/mock/highest-price
+electricity/highest-price
+```
+
+**Sample query - without date**
+```
+curl localhost:8080/electricity/mock/lowest-price
+curl localhost:8080/electricity//lowest-price
+
+curl localhost:8080/electricity/mock/highest-price
+curl localhost:8080/electricity//highest-price
 ```
 
 **Expected outcome**
@@ -18,11 +29,10 @@ electricity/lowest-price
 }
 ```
 
-## Displays the lowest electricity price for the chosen day 
-**Endpoints**
+**Sample query - with a specific date (userTime parameter)**
 ```
-electricity/mock/lowest-price?userTime=2024-05-05
-electricity/lowest-price?userTime=2024-05-05
+curl localhost:8080/electricity/mock/lowest-price?userTime=2024-05-05
+curl localhost:8080/electricity/lowest-price?userTime=2024-05-05
 ```
 
 **Expected outcome**
