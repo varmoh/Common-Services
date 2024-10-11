@@ -6,15 +6,15 @@ declaration:
     This service fetches the Nordpool electricity prices for a user-specified date.
   method: get
   params:
-    userTime: string  # yyyy-mm-dd format
+    userDate: string  # yyyy-mm-dd format
   returns: json
 
-# Prepare Dates based on userTime
+# Prepare Dates based on userDate
 prepareDates:
   assign:
-    userTime: ${incoming.params.userTime || new Date().toISOString().split('T')[0]}  # yyyy-mm-dd 
-    startDateTime: ${new Date(new Date(userTime).getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] + "T21:00:00.000Z"} # day before at 9am
-    endDateTime: ${userTime + "T20:59:59.000Z"} # chosen date at 9pm - default time format
+    userDate: ${incoming.params.userDate || new Date().toISOString().split('T')[0]}  # yyyy-mm-dd 
+    startDateTime: ${new Date(new Date(userDate).getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] + "T21:00:00.000Z"} # day before at 9am
+    endDateTime: ${userDate + "T20:59:59.000Z"} # chosen date at 9pm - default time format
   next: getPriceForPeriod
 
 getPriceForPeriod:
@@ -91,4 +91,4 @@ assignVariables:
   next: returnResult
 
 returnResult:
-  return: ${[userTime, timeVar, minPrice]}
+  return: ${[userDate, timeVar, minPrice]}

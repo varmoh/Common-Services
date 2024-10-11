@@ -29,10 +29,10 @@ curl localhost:8080/electricity//highest-price
 }
 ```
 
-**Sample query - with a specific date (userTime parameter)**
+**Sample query - with a specific date parameter (userDate)**
 ```
-curl localhost:8080/electricity/mock/lowest-price?userTime=2024-05-05
-curl localhost:8080/electricity/lowest-price?userTime=2024-05-05
+curl localhost:8080/electricity/mock/lowest-price?userDate=2024-05-05
+curl localhost:8080/electricity/lowest-price?userDate=2024-05-05
 ```
 
 **Expected outcome**
