@@ -10,13 +10,28 @@ declaration:
     endDate: string    # yyyy-mm-dd format (end of the period)
   returns: json
 
-# Prepare Dates based on startDate and endDate
-prepareDates:
+# Prepare startDate, endDate
+getDates:
   assign:
-    startDate: ${incoming.params.startDate || new Date().toISOString().split('T')[0]}  # defaults to today if not provided
-    endDate: ${incoming.params.endDate || startDate]} # defaults to sratDate if not provided
-    startDateTime: ${new Date(startDate).toISOString().split('T')[0] + "T21:00:00.000Z"}
-    endDateTime: ${new Date(new Date(endDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] + "T20:59:59.000Z"}  # end at the end of the day
+    startDate: ${incoming.params.startDate || new Date().toISOString().split('T')[0]}  # yyyy-mm-dd
+    endDate: ${incoming.params.endDate || new Date().toISOString().split('T')[0]} # default to today
+  next: formatDates
+
+# make dates conform to API standard
+formatDates:
+  assign:
+    startDateTime: ${new Date(new Date(startDate).getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] + "T21:00:00.000Z"}
+    endDateTime: ${endDate + "T20:59:59.000Z"}
+  next: dateCheck
+
+dateCheck:
+  switch:
+    - condition: ${new Date(endDateTime) < new Date(startDateTime)}
+      next: startDateError
+  next: logStep
+
+logStep:
+  log: "Start date: ${startDateTime}, End date: ${endDateTime}"
   next: getPriceForPeriod
 
 getPriceForPeriod:
@@ -27,24 +42,26 @@ getPriceForPeriod:
       start: ${startDateTime}
       end: ${endDateTime}
   result: eleringPrices
-  next: assignVariables
+  next: assignResult
 
-assignVariables:
+assignResult:
   assign:
-    # Sorting prices to get the lowest price and its timestamp within the specified range
-    minPriceData: ${eleringPrices.response.body.data.ee.sort((a, b) => a.price - b.price)[0]}
-    minPrice: ${minPriceData.price}
-    minPriceTimestamp: ${minPriceData.timestamp}
+    periodPrices: ${eleringPrices.response.body.data.ee}
+    responseLength: ${(eleringPrices.response.body.data.ee).length}
+  next: logResult
 
-    # Handling timestamp with Tallinn's time zone offset
-    tallinnOffset: 10800  # Tallinn is UTC+3 during DST
-    adjustedTimestamp: ${minPriceTimestamp + tallinnOffset} 
-    adjustedHour: ${Math.floor((adjustedTimestamp % 86400) / 3600)}
-    timeVar: ${("0" + adjustedHour).slice(-2) + ":00"}
-
-    # Check if endDate is different from startDate
-    dateVar: ${startDate + " to " + endDate}
+logResult:
+  log: "RESPONSE LENGTH: ${responseLength}"
   next: returnResult
 
 returnResult:
-  return: ${[dateVar, timeVar, minPrice]}
+  return: ${periodPrices}
+  next: end
+
+startDateError:
+  return: "Error: start date cannot be later than end date"
+  next: end
+
+dateRangeError:
+  return: "Error: interval cannot be longer than 1 year"
+  next: end
