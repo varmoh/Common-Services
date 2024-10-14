@@ -1,19 +1,20 @@
 declaration:
   call: declare
   version: 0.1
-  name: "MOCK - Get Highest Electricity Price"
+  name: "MOCK - Electricity Price Service"
   description: |
-    "This mock service fetches the highest electricity price for a specified day."
-  method: "get"
-  parameters:
-    - date: "The date (YYYY-MM-DD) for which to retrieve the highest electricity price."
-  return: "json"
+    This service fetches the Nordpool electricity prices for a user-specified date.
+  method: get
+  params:
+    userTime: string  # yyyy-mm-dd format
+  returns: json
 
+# Prepare Dates based on userTime
 prepareDates:
   assign:
-    userDate: ${incoming.params.userDate || new Date().toISOString().split('T')[0]}  # yyyy-mm-dd
-    startDateTime: ${new Date(new Date(userDate).getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] + "T21:00:00.000Z"}  # day before at 9am
-    endDateTime: ${userDate + "T20:59:59.000Z"}  # chosen date at 9pm - default time format
+    userTime: ${incoming.params.userTime || new Date().toISOString().split('T')[0]}  # yyyy-mm-dd 
+    startDateTime: ${new Date(new Date(userTime).getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] + "T21:00:00.000Z"} # day before at 9am
+    endDateTime: ${userTime + "T20:59:59.000Z"} # chosen date at 9pm - default time format
   next: getPriceForPeriod
 
 getPriceForPeriod:
@@ -26,7 +27,7 @@ getPriceForPeriod:
         end: ${endDateTime}
     response:
         data:
-          ee:  # mock data
+          ee: # mock data
             - timestamp: 1728507600
               price: 6.9500
             - timestamp: 1728511200
@@ -80,23 +81,14 @@ getPriceForPeriod:
 
 assignVariables:
   assign:
-    maxPrice: ${eleringToday.response.body.data.ee.sort((a, b) => b.price - a.price)[0].price}  # get highest price
-    maxPriceTimestamp: ${eleringToday.response.body.data.ee.sort((a, b) => b.price - a.price)[0].timestamp}  # get highest timestamp
+    minPrice: ${eleringToday.response.body.data.ee.sort((a, b) => a.price - b.price)[0].price} # get lowest price
+    minPriceTimestamp: ${eleringToday.response.body.data.ee.sort((a, b) => a.price - b.price)[0].timestamp} # get lowest timestamp
 
     tallinnOffset: 10800  # Tallinn is UTC+3 during DST (3 hours in seconds)
-    adjustedTimestamp: ${maxPriceTimestamp + tallinnOffset}
+    adjustedTimestamp: ${minPriceTimestamp + tallinnOffset} 
     adjustedHour: ${Math.floor((adjustedTimestamp % 86400) / 3600)}
     timeVar: ${("0" + adjustedHour).slice(-2) + ":00"}
   next: returnResult
 
 returnResult:
-  return: ${[userDate, timeVar, maxPrice]}
-
-# expected mock response
-# {
-#     "response": [
-#         "2024-10-11",
-#         "08:00",
-#         86.71
-#     ]
-# }
+  return: ${[userTime, timeVar, minPrice]}
