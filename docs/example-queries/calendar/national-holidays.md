@@ -1,14 +1,15 @@
-### List all national holidays this given year
+# National Holidays API Documentation
 
-#### Endpoint
+## List all national holidays this given year
+**Endpoint**  
 `/calendar/national-holidays`
 
-#### Sample query
+**Sample query**
 ```
 curl localhost:8080/calendar/national-holidays
 ```
 
-#### Expected outcome
+**Expected outcome**
 ```
 {
     "response": [
@@ -25,18 +26,16 @@ curl localhost:8080/calendar/national-holidays
 }
 ```
 
-
-### Validate if it's a national holiday today
-
-#### Endpoint
+## Validate if it's a national holiday today
+**Endpoint**  
 `/calendar/national-holidays/today`
 
-#### Sample query
+**Sample query**
 ```
 curl localhost:8080/calendar/national-holidays/today
 ```
 
-#### Expected outcome - if current date "2024-03-29"
+**Expected outcome - if current date "2024-03-29" **
 ```
 {
     "response": {
@@ -46,25 +45,16 @@ curl localhost:8080/calendar/national-holidays/today
 }
 ```
 
-#### Expected outcome - if no national holiday today
-```
-{
-  "response": null
-}
-```
-
-
-### Provide the previous national holiday
-
-#### Endpoint
+## Provide the previous national holiday
+**Endpoint**  
 `/calendar/national-holidays/previous`
 
-#### Sample query
+**Sample query**
 ```
-curl localhost:8080/calendar/national-holidays/previous
+curl -X localhost:8080/calendar/national-holidays/previous
 ```
 
-#### Expected outcome
+**Expected outcome**
 ```
 {
     "response": {
@@ -74,18 +64,16 @@ curl localhost:8080/calendar/national-holidays/previous
 }
 ```
 
-
-### Provide the next national holiday
-
-#### Endpoint  
+## Provide the next national holiday
+**Endpoint**  
 `/calendar/national-holidays/next`
 
-#### Sample query
+**Sample query**
 ```
 curl localhost:8080/calendar/national-holidays/next
 ```
 
-#### Expected outcome - if current date e.g. "2024-09-24"
+**Expected outcome - if current date e.g. "2024-09-24"**
 ```
 {
     "response": {
@@ -95,18 +83,16 @@ curl localhost:8080/calendar/national-holidays/next
 }
 ```
 
-
-### List all national holidays existed this given year until now (including)
-
-#### Endpoint  
+## List all national holidays existed this given year until now (including)
+**Endpoint**  
 `/calendar/national-holidays/ytd`
 
-#### Sample query
+**Sample query**
 ```
 curl localhost:8080/calendar/national-holidays/ytd
 ```
 
-#### Expected outcome - if current date e.g. "2024-09-24"
+**Expected outcome - if current date e.g. "2024-09-24"**
 ```
 {
     "response": [
@@ -123,18 +109,16 @@ curl localhost:8080/calendar/national-holidays/ytd
 }
 ```
 
-
-### List all national holidays from today (including) until the end of given year
-
-#### Endpoint  
+## List all national holidays from today (including) until the end of given year
+**Endpoint**  
 `/calendar/national-holidays/eoy`
 
-#### Sample query
+**Sample query**
 ```
 curl localhost:8080/calendar/national-holidays/eoy
 ```
 
-#### Expected outcome - if current date e.g. "2024-09-24"
+**Expected outcome - if current date e.g. "2024-09-24"**
 ```
 {
     "response": [
@@ -151,18 +135,16 @@ curl localhost:8080/calendar/national-holidays/eoy
 }
 ```
 
-
-### List all national holidays based on input text
-
-#### Endpoint - accepts holiday name as parameter**  
+## List all national holidays based on input text
+**Endpoint - accepts holiday name as parameter**  
 `/calendar/national-holidays/find/by-name`
 
-#### Sample query
+**Sample query**
 ```
 curl localhost:8080/calendar/national-holidays/by-name?name=uusaasta
 ```
 
-#### Expected outcome - if text input/passed parameter is "uusaasta"
+**Expected outcome - if text input/passed parameter is "uusaasta"**
 ```
 {
     "response": [
@@ -174,18 +156,16 @@ curl localhost:8080/calendar/national-holidays/by-name?name=uusaasta
 }
 ```
 
-
-### List all national holidays based on month
-
-#### Endpoint - accepts holiday month as parameter 
+## List all national holidays based on month
+**Endpoint - accepts holiday month as parameter**  
 `/calendar/national-holidays/find/by-month`
 
-#### Sample query
+**Sample query**
 ```
-curl localhost:8080/calendar/national-holidays/find/by-month?month=5
+curl /calendar/national-holidays/find/by-month?month=5
 ```
 
-#### Expected outcome - if number input/passed parameter is 5
+**Expected outcome - if number input/passed parameter is 5**
 ```
 {
     "response": [
