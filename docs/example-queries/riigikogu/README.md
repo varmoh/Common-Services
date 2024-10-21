@@ -1,11 +1,11 @@
-# Member Participation Statistics Service Documentation
+# Riigikogu Services API Documentation
 
-## Get member participation statistics for Riigikogu
+## Get member participation statistics
 
 **Endpoint**
 ```
-localhost:8080/riigikogu/mock/member-participation
-localhost:8080/riigikogu/member-participation
+iigikogu/mock/member-participation
+riigikogu/member-participation
 ```
 
 **Accepts parameters**
@@ -14,9 +14,6 @@ starDate    # not required, defaults to endDate - 30 days
 endDate     # not required, defaults to Today
 memberName  # required, otherwise query fails
 ```
-
-**Description**
-This service provides participation statistics for Riigikogu members. It allows you to specify a date range and fetches the attendance and absence data for a given member.
 
 **Sample Query**
 ```
@@ -36,16 +33,13 @@ curl "localhost:8080/services/member-participation?memberName=Jüri%20Ratas&star
 
 **Endpoint**
 ```
-/services/votings/latest
-/services/votings/latest
+riigikogu/recent-voting
+riigikogu/mock/recent-voting
 ```
-
-**Description**
-This service retrieves the most recent voting results from Riigikogu. It provides the title of the voting along with details about how many members voted in favor, against, were neutral, or abstained.
 
 **Sample Query**
 ```
-curl "localhost:8080/services/votings/latest"
+curl "localhost:8080/riigikogu/recent-voting"
 ```
 
 **Expected outcome**
@@ -55,3 +49,45 @@ curl "localhost:8080/services/votings/latest"
 {
     "response": "'Eelnõu X', Poolt on 50, Vastu on 30, Neutraalsed 10, Ei hääletanud 5"
 }
+```
+
+## Fetch 5 Most Recent Voting Results
+
+**Endpoint**
+```
+riigikogu/five-most-recent
+riigikogu/mock/five-most-recent
+```
+
+**Sample Query**
+```
+curl "localhost:8080/services/most-recent-votings"
+```
+
+**Expected outcome**
+```
+{
+    "response": [
+        {
+            "title": "Perehüvitiste seaduse muutmise seadus",
+            "present": 81,
+            "absent": 20,
+            "inFavor": 46,
+            "against": 20,
+            "neutral": 0,
+            "abstained": 15
+        },
+        {
+            "title": "Vabariigi Valitsuse seaduse muutmise seadus",
+            "present": 84,
+            "absent": 17,
+            "inFavor": 53,
+            "against": 25,
+            "neutral": 0,
+            "abstained": 6
+        }
+        ...
+    ]
+}
+
+```
