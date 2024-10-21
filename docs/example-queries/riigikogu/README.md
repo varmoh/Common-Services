@@ -55,4 +55,3 @@ curl "localhost:8080/services/votings/latest"
 {
     "response": "'Eelnõu X', Poolt on 50, Vastu on 30, Neutraalsed 10, Ei hääletanud 5"
 }
-```
