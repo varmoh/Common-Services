@@ -9,7 +9,6 @@
 curl localhost:8080/calendar/national-holidays
 ```
 
-
 **Expected outcome**
 ```
 {
