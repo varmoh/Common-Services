@@ -79,4 +79,3 @@ curl localhost:8080/rahvaalgatus/most-recent
     ]
 }
 ```
-
