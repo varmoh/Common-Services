@@ -69,7 +69,9 @@ get_national_holidays_eoy:
 get_national_holidays_by_name:
   requestType: get
   template: "calendar/national-holidays/find/by-name"
-  body: ${name}
+  body: 
+    params:
+      - name: ${name} # Syntax from Alar
   result: get_result
   next: set_tag
 
@@ -119,7 +121,7 @@ set_tag:
 
 map_result_to_dm:
   requestType: post
-  template: "DMapper/hbs/calendar/national-holidays/search"
+  template: "[#DMAPPER]/hbs/calendar/national-holidays/search"
   body:
     response: ${get_result}
     tag: ${set_tag}
