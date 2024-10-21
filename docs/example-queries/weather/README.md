@@ -1,21 +1,24 @@
 # Weather Service API Documentation
 ## Estonian-specific weather information. 
 
-### mock file
-
 **Endpoint**
 ```
-/services/weather/mock
+/services/weather/EE
+```
+
+**Service accepts parameters**
+```
+countryCode # not required - defaults to "EE"
+region      # Required! - otherwise returns error
 ```
 
 **Sample query**
 ```
-curl localhost:8080/services/weather/mock
+curl -X POST "http://localhost:8080/weather/EE?region=tallinn" -H "Content-Type: application/json"
 ```
 
-**Expected outcome for deafult of "tallinn ".**
+**Expected outcome**
 
-**Mock service does not accept parameters.**
 ```
 {
     "response": [
