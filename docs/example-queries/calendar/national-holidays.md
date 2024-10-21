@@ -9,6 +9,7 @@
 curl localhost:8080/calendar/national-holidays
 ```
 
+
 **Expected outcome**
 ```
 {
@@ -19,7 +20,7 @@ curl localhost:8080/calendar/national-holidays
         },
         ...
         {
-            "date": "2024-12-26",
+            "date": "2024-12-26",>>>>>>> dev
             "name": "teine jõulupüha"
         }
     ]
@@ -145,12 +146,14 @@ curl localhost:8080/calendar/national-holidays/by-name?name=uusaasta
 ```
 
 **Expected outcome - if text input/passed parameter is "uusaasta"**
+
 ```
 {
     "response": [
         {
             "date": "2024-01-01",
             "name": "uusaasta"
+
         }
     ]
 }
