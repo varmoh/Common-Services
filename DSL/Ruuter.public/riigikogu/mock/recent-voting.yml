@@ -1,0 +1,42 @@
+declaration:
+  call: declare
+  version: 0.1
+  name: Mock Recent Voting Service
+  description: A mock service that provides most recent voting results
+  method: get
+  returns: json
+  namespace: common-services
+
+prepareRequest:
+  assign:
+    lang: "ET"
+  next: mockAPIRequest
+
+mockAPIRequest:
+  assign:
+    votingData:
+      response:
+        body:
+          description: "Eelnõu X"
+          inFavor: 50
+          against: 30
+          neutral: 10
+          abstained: 5
+  next: formatResponse
+
+formatResponse:
+  assign:
+    votingTitle: ${votingData.response.body.description}
+    inFavor: ${votingData.response.body.inFavor}
+    against: ${votingData.response.body.against}
+    neutral: ${votingData.response.body.neutral}
+    abstained: ${votingData.response.body.abstained}
+  next: returnResult
+
+returnResult:
+  return: ${"'" + votingTitle+ "', Poolt on " + inFavor + ", Vastu on " + against + ", Neutraalsed " + neutral + ", Ei hääletanud " + abstained}
+  next: end
+
+returnError:
+  return: "Error: failed to get recent votings data."
+  next: end
