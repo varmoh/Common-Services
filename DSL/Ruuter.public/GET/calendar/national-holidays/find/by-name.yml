@@ -1,0 +1,62 @@
+declaration:
+  call: declare
+  version: 0.1
+  name: "Find Holidays by Name"
+  description: |
+    This service filters national holidays based on a provided search term (name). It returns a list of matching holidays from the 2024 holiday data set.
+  method: get
+  params:
+    - name: "name"
+      type: string
+      description: "Search term for the holiday name."
+      required: true
+  returns: json
+
+prepare:
+  assign:
+    searchTerm: "${incoming.params.name}"
+
+makeApiCall:
+  call: reflect.mock
+  args:
+    url: "www.example.com"
+    response: 
+      holidays:
+        # --- Riigipühad ja puhkepäevad 2024 ---
+        - date: "2024-01-01"
+          name: "uusaasta"
+        - date: "2024-02-24"
+          name: "iseseisvuspäev, Eesti Vabariigi aastapäev"
+        - date: "2024-03-29"
+          name: "suur reede"
+        - date: "2024-03-31"
+          name: "ülestõusmispühade 1. püha"
+        - date: "2024-05-01"
+          name: "kevadpüha"
+        - date: "2024-05-19"
+          name: "nelipühade 1. püha"
+        - date: "2024-06-23"
+          name: "võidupüha"
+        - date: "2024-06-24"
+          name: "jaanipäev"
+        - date: "2024-08-20"
+          name: "taasiseseisvumispäev"
+        - date: "2024-12-24"
+          name: "jõululaupäev"
+        - date: "2024-12-25"
+          name: "esimene jõulupüha"
+        - date: "2024-12-26"
+          name: "teine jõulupüha"
+  result: holidayData
+
+filterHolidaysByName:
+  assign:
+    filteredHolidays: ${holidayData.response.body.holidays.filter(holiday => holiday.name.toLowerCase().includes(searchTerm.toLowerCase()))}
+
+# formatMessage:
+#   assign:
+#     holidaysList: ${filteredHolidays.map(holiday => holiday.date + " - " + holiday.name).join(", ")}
+#     message: "Leitud riigipühad: ${holidaysList.length > 0 ? holidaysList : 'Ühtegi riigipüha ei leitud.'}"
+
+returnValue:
+  return: ${filteredHolidays}

@@ -3,7 +3,7 @@
 
 **Endpoint**
 ```
-/services/weather/EE
+/POST/weather/EE
 ```
 
 **Service accepts parameters**

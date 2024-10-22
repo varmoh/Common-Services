@@ -4,7 +4,7 @@
 
 **Endpoint**
 ```
-iigikogu/mock/member-participation
+riigikogu/mock/member-participation
 riigikogu/member-participation
 ```
 
