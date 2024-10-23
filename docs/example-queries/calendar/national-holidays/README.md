@@ -135,7 +135,8 @@ curl localhost:8080/calendar/national-holidays/by-name?name=uusaasta
 ```
 
 ## List all national holidays based on month
-**Endpoint - accepts holiday month as parameter**  
+**Endpoint - accepts holiday month as parameter. eg. "06"**
+**Service will default to current month**
 `/calendar/national-holidays/find/by-month`
 
 **Sample query**
