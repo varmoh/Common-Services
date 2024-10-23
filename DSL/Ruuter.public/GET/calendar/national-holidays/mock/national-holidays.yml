@@ -1,18 +1,12 @@
 declaration:
   call: declare
   version: 0.1
-  name: "Find Upcoming Holiday"
+  name: "MOCK - All Estonian National Holidays Data Service"
   description: |
-    This service returns the next upcoming national holiday from today's date, using a mock API response of public holidays in 2024.
+    This service mocks a call to an API that returns nationa holidays in Estonia for the year 2024.
   method: get
   params: []
   returns: json
-
-prepare:
-  assign:
-    today: ${new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0]}
-  next: makeApiCall
-
 
 makeApiCall:
   call: reflect.mock
@@ -45,20 +39,20 @@ makeApiCall:
           name: "esimene jõulupüha"
         - date: "2024-12-26"
           name: "teine jõulupüha"
-  result: holiday_data
-  next: validateHoliday
+  result: holidayData
+  next: formatResult
 
-validateHoliday:
-  assign:
-    upcomingHoliday: ${holiday_data.response.body.holidays
-        .filter(holiday => holiday.date >= today).sort((a, b) => new Date(a.date) - new Date(b.date))[0]}
-  next: formatValue
-
-formatValue:
-  assign:
-    upcomingHoliday:
-      result: "Tulev riigipüha on ${upcomingHoliday.name} - ${upcomingHoliday.date}"
+formatResult:
+  call: reflect.mock
+  args:
+    url: "[#DMAPPER]/hbs/calendar/national-holidays/get_national_holidays"
+    body:
+      holidaysYTD: ${holidaysYTD}
+    response:
+      result: "Kõik pühad sellel aastal on:\n* 2024-01-01\nuusaasta\n\n* 2024-02-24\niseseisvuspäev, Eesti Vabariigi aastapäev\n\n* 2024-03-29\nsuur reede\n\n* 2024-03-31\nülestõusmispühade 1. püha\n\n* 2024-05-01\nkevadpüha\n\n* 2024-05-19\nnelipühade 1. püha\n\n* 2024-06-23\nvõidupüha\n\n* 2024-06-24\njaanipäev\n\n* 2024-08-20\ntaasiseseisvumispäev\n\n* 2024-12-24\njõululaupäev\n\n* 2024-12-25\nesimene jõulupüha\n\n* 2024-12-26\nteine jõulupüha\n\n"
+  result: formattedHolidays
   next: returnValue
 
 returnValue:
-  return: "${upcomingHoliday}"
+  return: ${formattedHolidays.response.body}
+  next: end

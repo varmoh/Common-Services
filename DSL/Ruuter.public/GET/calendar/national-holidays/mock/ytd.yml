@@ -1,17 +1,17 @@
 declaration:
   call: declare
   version: 0.1
-  name: "Find Holidays Until End of Year"
+  name: "MOCK - Filter Holidays Year-to-Date"
   description: |
-    This service returns all holidays from today's date until the end of the year, based on a mock API response of 2024 public holidays.
+    This mock service filters holidays for the current year-to-date from a mocked API response.
   method: get
   params: []
   returns: json
 
 prepare:
   assign:
-    today: ${new Date().toISOString().split("T")[0]}
-    yearEnd: ${today.split("-")[0] + "-12-31"}
+    today: "2024-10-10" #${new Date().toISOString().split("T")[0]}
+    yearStart: ${today.split("-")[0] + "-01-01"}
   next: makeApiCall
 
 makeApiCall:
@@ -45,24 +45,27 @@ makeApiCall:
           name: "esimene jõulupüha"
         - date: "2024-12-26"
           name: "teine jõulupüha"
-  result: holiday_data
-  next: validateHolidaysEOY
+  result: holidayData
+  next: validateHolidaysYTD
 
-validateHolidaysEOY:
+validateHolidaysYTD:
   assign:
-    holidaysEOY: ${holiday_data.response.body.holidays
-        .filter(holiday => holiday.date >= today && holiday.date <= yearEnd)
+    holidaysYTD: ${holidayData.response.body.holidays
+        .filter(holiday => holiday.date >= yearStart && holiday.date <= today)
         .sort((a, b) => new Date(a.date) - new Date(b.date))}
   next: formatResult
 
 formatResult:
-  requestType: post
-  template: "[#DMAPPER]/hbs/calendar/national-holidays/get_national_holiday_eoy"
-  body:
-    holidaysEOY: ${holidaysEOY}
+  call: reflect.mock
+  args:
+    url: "[#DMAPPER]/hbs/calendar/national-holidays/get_national_holiday_ytd"
+    body:
+      holidaysYTD: ${holidaysYTD}
+    response:
+      result: "Kõik pühad aasta algusest kuni tänaseni:\n* 2024-01-01\nuusaasta\n\n* 2024-02-24\niseseisvuspäev, Eesti Vabariigi aastapäev\n\n* 2024-03-29\nsuur reede\n\n* 2024-03-31\nülestõusmispühade 1. püha\n\n* 2024-05-01\nkevadpüha\n\n* 2024-05-19\nnelipühade 1. püha\n\n* 2024-06-23\nvõidupüha\n\n* 2024-06-24\njaanipäev\n\n* 2024-08-20\ntaasiseseisvumispäev\n"
   result: formattedHolidays
   next: returnValue
 
 returnValue:
-  return: ${formattedHolidays}
+  return: ${formattedHolidays.response.body}
   next: end

@@ -1,18 +1,17 @@
 declaration:
   call: declare
   version: 0.1
-  name: "Find Upcoming Holiday"
+  name: "MOCK - Check Today's Holiday"
   description: |
-    This service returns the next upcoming national holiday from today's date, using a mock API response of public holidays in 2024.
+    This mock service checks if today is a national holiday based on a mocked API response.
   method: get
   params: []
   returns: json
 
 prepare:
   assign:
-    today: ${new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0]}
+    today: "2024-01-01" # ${new Date().toISOString().split("T")[0]}
   next: makeApiCall
-
 
 makeApiCall:
   call: reflect.mock
@@ -45,20 +44,36 @@ makeApiCall:
           name: "esimene jõulupüha"
         - date: "2024-12-26"
           name: "teine jõulupüha"
-  result: holiday_data
+  result: holidayData
   next: validateHoliday
 
 validateHoliday:
   assign:
-    upcomingHoliday: ${holiday_data.response.body.holidays
-        .filter(holiday => holiday.date >= today).sort((a, b) => new Date(a.date) - new Date(b.date))[0]}
+    holiday: ${holidayData.response.body.holidays.find(holiday => holiday.date === today)}
+  next: checkHoliday
+
+checkHoliday:
+  switch:
+    - condition: ${!holiday}
+      next: holidayNotFound
   next: formatValue
 
 formatValue:
   assign:
-    upcomingHoliday:
-      result: "Tulev riigipüha on ${upcomingHoliday.name} - ${upcomingHoliday.date}"
+    holiday:
+      result: "Täna on ${holiday.name}"
   next: returnValue
 
 returnValue:
-  return: "${upcomingHoliday}"
+  return: ${holiday}
+  next: end
+# -------------------------------------------------- 
+holidayNotFound:
+  assign:
+    noHoliday:
+      result: "Täna ei ole riigpüha."
+  next: returnNoValue
+
+returnNoValue:
+  return: ${noHoliday}
+  next: end

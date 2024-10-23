@@ -1,14 +1,12 @@
 declaration:
-  name: "Holiday Filter by Month"
+  name: "MOCK - Holiday Filter by Month"
   description: "Fetches and filters Estonian national holidays for a specified month in 2024."
-  parameters:
-    - month: "The month (1-12) for which to retrieve holidays."
   method: "get"
   return: "json"
 
 prepare:
   assign: # MM - month
-    searchTerm: "${incoming.params.month || (new Date().getMonth() + 1).toString()}" # default to current month - ex."10"/MM for october 
+    searchTerm: "06" #"${incoming.params.month || (new Date().getMonth() + 1).toString()}" # default to current month - ex."10"/MM for october 
   next: makeApiCall
 
 makeApiCall:
@@ -55,9 +53,10 @@ checkHolidays:
     - condition: ${filteredHolidays.length < 1}
       next: holidayNotFound
     - condition: ${filteredHolidays.length > 1}
-      next: formatValue
+      next: formatResult
     - condition: ${filteredHolidays.length === 1}
       next: assignValue
+  next: assignValue
 
 assignValue:
   assign:
@@ -65,16 +64,17 @@ assignValue:
       result: "Antud kuus on ${filteredHolidays[0].name} - ${filteredHolidays[0].date}"
   next: returnValue
 
-formatValue:
-  requestType: post
-  template: "[#DMAPPER]/hbs/calendar/national-holidays/get_national_holiday_by_month"
-  body:
-    filteredHolidays: ${filteredHolidays}
+formatResult:
+  call: reflect.mock
+  args:
+    url: "[#DMAPPER]/hbs/calendar/national-holidays/get_national_holiday_by_month"
+    response:
+      result: "Kõik riigipühad antud kuus on: \n*2024-06-23\n võidupüha\n\n*2024-06-24\n jaanipäev\n\n"
   result: holiday
-  next: returnDMValue
+  next: returnValue
 
 returnValue:
-  return: ${holiday.result}
+  return: ${holiday.response.body}
   next: end
 
 returnDMValue:
@@ -91,3 +91,5 @@ holidayNotFound:
 returnNoHolidays:
   return: ${noHoliday}
   next: end
+
+

@@ -40,9 +40,19 @@ makeApiCall:
         - date: "2024-12-26"
           name: "teine jõulupüha"
   result: holidayData
+  next: formatResult
+
+formatResult:
+  requestType: post
+  template: "[#DMAPPER]/hbs/calendar/national-holidays/get_national_holidays"
+  body:
+    holidaysEOY: ${holidayData.response.body.holidays}
+  result: formattedHolidays
+  next: returnValue
 
 returnValue:
-  return: ${holidayData.response.body.holidays}
+  return: ${formattedHolidays}
+  next: end
 
         # # --- Riiklikud tähtpäevad 2024 ---
         # - date: "2024-01-06"

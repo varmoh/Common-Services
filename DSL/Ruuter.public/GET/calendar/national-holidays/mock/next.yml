@@ -1,18 +1,17 @@
 declaration:
   call: declare
   version: 0.1
-  name: "Find Upcoming Holiday"
+  name: "MOCK - Find Upcoming Holiday"
   description: |
-    This service returns the next upcoming national holiday from today's date, using a mock API response of public holidays in 2024.
+    This mock service returns the next upcoming national holiday from today's date, using a mock API response of public holidays in 2024.
   method: get
   params: []
   returns: json
 
 prepare:
   assign:
-    today: ${new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0]}
+    today: "2024-06-23" # ${new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0]}
   next: makeApiCall
-
 
 makeApiCall:
   call: reflect.mock
