@@ -1,0 +1,45 @@
+declaration:
+ call: declare
+ version: 0.1
+ description: "Search Companies by name"
+ method: post
+ accepts: json
+ returns: json
+ namespace: common-services
+ allowlist:
+   params:
+     - field: name
+       type: string
+       description: "Parameter 'name'"
+   headers:
+     - field: cookie
+       type: string
+       description: "Cookie field"
+
+assign_values:
+  assign:
+    params: 
+      name: ${incoming.body.message[1]}
+
+getCompaniesWithName:
+  call: http.post
+  args:
+    url: "[#OPENSEARCH]/companies/_search/template"
+    body:
+      id: "company-with-name"
+      params: ${params}
+  result: res
+
+mapData:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/get_company_with_name"
+    headers:
+      type: "json"
+    body:
+      hits: ${res.response.body.hits.hits}
+  result: mappedData
+
+return_result:
+  return: ${mappedData.response.body}
+  next: end
