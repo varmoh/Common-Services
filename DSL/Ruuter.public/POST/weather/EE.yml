@@ -1,6 +1,6 @@
 declaration:
   call: declare
-  version: 1.0.0
+  version: "0.1"
   description: "Gets weather information for locations in EE - estonia"
   method: post
   returns: json
@@ -9,22 +9,16 @@ declaration:
 # Assigns key variables for processing the request, including API endpoints.
 assignVariables:
   assign:
-    countryCode: ${ incoming.params.country_code || "EE" } # defaults to estonian
-    region: ${"tallinn"} # ${ incoming.params.region || "tallinn"} # uncomment when publicapi.envir issue is solved
+    chatId: ${incoming.params.chatId || "Win"}
+    authorId: ${incoming.params.authorId || "A bigger Win"}
+    countryCode: ${"EE"} #${incoming.params.input[0] || "EE" } # defaults to estonian
+    region: "tallinn" # ${ incoming.params.input[1]  || "tallinn"} # uncomment when publicapi.envir issue is solved
 
     gazeteerUrl: "https://inaadress.maaamet.ee/inaadress"
     publicapiUrl: "https://publicapi.envir.ee/v1/combinedWeatherData"
     ilmmicroserviceUrl: "https://ilmmicroservice.envir.ee/api/forecasts"
   next: getRegionData
 
-# Validates the region input to prevent processing errors.
-checkVariables:
-  switch:
-    - condition: ${typeof region !== 'string' || region.trim() === ""}
-      next: error
-  next: getRegionData
-
-#
 # Retrieves geographical data for the specified region from the gazetteer API.
 getRegionData:
   call: http.get
@@ -33,29 +27,24 @@ getRegionData:
   result: regionData
   next: assingCoordinates
 
-#
 # Extracts longitude and latitude from the region data for further API calls.
 assingCoordinates:
   assign:
     longitude: ${regionData.response.body.addresses[0].viitepunkt_l}
     latitude: ${regionData.response.body.addresses[0].viitepunkt_b}
-  next: logStep
+  next: assignStationParameters
 
-logStep:
-  log: "COORDINATES: ${longitude}, ${latitude}"
-  next: assignStationParameters # getNearestStation # uncomment when publicapi.envir issue is solved
-
-# uncomment when publicapi.envir issue is solved
-# # Finds the nearest weather station using the provided coordinates.
-# getNearestStation:
-#   call: http.get
-#   args:
-#     # url: https://publicapi.envir.ee/v1/combinedWeatherData/nearestStationByCoordinates?longitude=24.7535&latitude=59.4370
-#     url: "${publicapiUrl}/nearestStationByCoordinates?longitude=${longitude}&latitude=${latitude}"
-#     header:
-#       Accept: "application/json"
-#   result: nearestWeatherStation
-#   next: assignStationParameters
+# # uncomment when publicapi.envir issue is solved
+# # # Finds the nearest weather station using the provided coordinates.
+# # getNearestStation:
+# #   call: http.get
+# #   args:
+# #     # url: https://publicapi.envir.ee/v1/combinedWeatherData/nearestStationByCoordinates?longitude=24.7535&latitude=59.4370
+# #     url: "${publicapiUrl}/nearestStationByCoordinates?longitude=${longitude}&latitude=${latitude}"
+# #     header:
+# #       Accept: "application/json"
+# #   result: nearestWeatherStation
+# #   next: assignStationParameters
 
 
 # Assigns the station ID - nearest weather station response.
@@ -70,14 +59,33 @@ getWeather:
   args:
     url: "${ilmmicroserviceUrl}/mobileLocationForecast?latitude=${latitude}&longitude=${longitude}&stationId=${stationId}"
   result: weather
-  next: serveResult
+  next: assignResponse
 
-# Weather data as a response to query (JSON).
-serveResult:
-  return: ${weather.response.body.entries.entry}
-  next: end
+# Assigns the weather data response.
+assignResponse:
+  assign:
+    res: ${weather.response.body}
+  next: formatMessages
 
-# Handles invalid region input with an error message.
-error:
-  return: "Error: Wrong region value - Region required"
-  next: end
+# format throgh DM bot response to messages
+formatMessages:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+  result: formatMessage
+
+return_result:
+  return: ${formatMessage.response.body}
