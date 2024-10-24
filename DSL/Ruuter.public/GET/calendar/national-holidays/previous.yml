@@ -10,6 +10,8 @@ declaration:
 
 prepare:
   assign:
+    chatId: ${incoming.body.chatId}
+    authorId: ${incoming.body.authorId}
     today: ${new Date().toISOString().split("T")[0]}
   next: makeApiCall
 

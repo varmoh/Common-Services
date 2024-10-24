@@ -8,7 +8,9 @@ declaration:
 
 prepare:
   assign: # MM - month
-    searchTerm: "${incoming.params.month || (new Date().getMonth() + 1).toString()}" # default to current month - ex."10"/MM for october 
+    chatId: ${incoming.body.chatId}
+    authorId: ${incoming.body.authorId}
+    searchTerm: "${incoming.body.input || [(new Date().getMonth() + 1).toString()]}" # default to current month - ex."10"/MM for october 
   next: makeApiCall
 
 makeApiCall:
@@ -47,7 +49,7 @@ makeApiCall:
 
 filterHolidaysByMonth:
   assign:
-    filteredHolidays: ${holidayData.response.body.holidays.filter(holiday => !isNaN(searchTerm) && parseInt(searchTerm) >= 1 && parseInt(searchTerm) <= 12 && (new Date(holiday.date).getMonth() + 1 === parseInt(searchTerm)))}
+    filteredHolidays: ${holidayData.response.body.holidays.filter(holiday => !isNaN(searchTerm[0]) && parseInt(searchTerm[0]) >= 1 && parseInt(searchTerm[0]) <= 12 && (new Date(holiday.date).getMonth() + 1 === parseInt(searchTerm[0])))}
   next: checkHolidays
 
 checkHolidays:

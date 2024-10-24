@@ -8,6 +8,12 @@ declaration:
   params: []
   returns: json
 
+prepare:
+  assign:
+    chatId: ${incoming.body.chatId}
+    authorId: ${incoming.body.authorId}
+  next: makeApiCall
+
 makeApiCall:
   call: reflect.mock
   args:
