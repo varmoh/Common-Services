@@ -10,6 +10,8 @@ declaration:
 
 prepare:
   assign:
+    chatId: ${incoming.body.chatId}
+    authorId: ${incoming.body.authorId}
     today: ${new Date().toISOString().split("T")[0]}
     yearStart: ${today.split("-")[0] + "-01-01"}
   next: makeApiCall
@@ -56,13 +58,38 @@ validateHolidaysYTD:
   next: formatResult
 
 formatResult:
-  requestType: post
-  template: "[#DMAPPER]/hbs/calendar/national-holidays/get_national_holiday_ytd"
-  body:
-    holidaysYTD: ${holidaysYTD}
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holiday_ytd"
+    body:
+      data: ${holidaysYTD}
   result: formattedHolidays
-  next: returnValue
+  next: assignResponse
 
-returnValue:
-  return: ${formattedHolidays}
-  next: end
+assignResponse:
+  assign:
+    res: ${formattedHolidays.response.body}
+  next: formatMessages
+
+# format throgh DM bot response to messages
+formatMessages:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+  result: formatMessage
+
+return_result:
+  return: ${formatMessage.response.body}

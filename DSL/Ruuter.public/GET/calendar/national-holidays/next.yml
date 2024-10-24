@@ -56,9 +56,27 @@ validateHoliday:
 
 formatValue:
   assign:
-    upcomingHoliday:
-      result: "Tulev riigipüha on ${upcomingHoliday.name} - ${upcomingHoliday.date}"
-  next: returnValue
+    res: "Tulev riigipüha on ${upcomingHoliday.name} - ${upcomingHoliday.date}"
+  next: formatMessages
 
-returnValue:
-  return: "${upcomingHoliday}"
+formatMessages:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+  result: formatMessage
+
+return_result:
+  return: ${formatMessage.response.body}
