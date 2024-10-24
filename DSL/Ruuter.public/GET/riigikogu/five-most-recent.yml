@@ -9,6 +9,8 @@ declaration:
 
 prepareVariables:
   assign:
+    chatId: ${incoming.params.chatId}
+    authorId: ${incoming.params.authorId}
     offSet: 5 # to get start date withe enough data
     end: ${new Date().toISOString().split('T')[0]}
     start: ${new Date(new Date(end).setDate(new Date(end).getDate() - offSet)).toISOString().split('T')[0]} 
@@ -21,11 +23,6 @@ makeAPIRequest:
     headers:
       Accept: "application/json"
   result: votingData
-  error: requestError
-  next: logStep
-
-logStep:
-  log: ${votingData.response.body.slice(0, 10)}
   next: votingDataFormatting
 
 votingDataFormatting:
@@ -34,97 +31,41 @@ votingDataFormatting:
     votingDetails: ${recentVotings.flatMap(session => session.votings)
       .filter(voting => voting.type.value === "Avalik" && voting.relatedDraft)
       .sort((voting1, voting2) => new Date(voting2.startDateTime) - new Date(voting1.startDateTime)).slice(0, 5)}  # Take the first 5 items
-  error: dataFormattingError
-  next: returnResults
+  next: formatResult
 
-returnResults:
-  return: ${"Viimased viis Riigikogu hääletust- " +
-           votingDetails[0].relatedDraft.title + 
-           ". Kohal-" + votingDetails[0].present + 
-           ". Puudus-" + votingDetails[0].absent + 
-           ". Poolt-" + votingDetails[0].inFavor + 
-           ". Vastu-" + votingDetails[0].against + 
-           ". Erapooletu-" + votingDetails[0].neutral + 
-           ". Erapooletuks jäi-" + votingDetails[0].abstained + 
-           ". " + votingDetails[1].relatedDraft.title + 
-           ". Kohal-" + votingDetails[1].present + 
-           ". Puudus-" + votingDetails[1].absent + 
-           ". Poolt-" + votingDetails[1].inFavor + 
-           ". Vastu-" + votingDetails[1].against + 
-           ". Erapooletu-" + votingDetails[1].neutral + 
-           ". Erapooletuks jäi-" + votingDetails[1].abstained + 
-           ". " + votingDetails[2].relatedDraft.title + 
-           ". Kohal-" + votingDetails[2].present + 
-           ". Puudus-" + votingDetails[2].absent + 
-           ". Poolt-" + votingDetails[2].inFavor + 
-           ". Vastu-" + votingDetails[2].against + 
-           ". Erapooletu-" + votingDetails[2].neutral + 
-           ". Erapooletuks jäi-" + votingDetails[2].abstained + 
-           ". " + votingDetails[3].relatedDraft.title + 
-           ". Kohal-" + votingDetails[3].present + 
-           ". Puudus-" + votingDetails[3].absent + 
-           ". Poolt-" + votingDetails[3].inFavor + 
-           ". Vastu-" + votingDetails[3].against + 
-           ". Erapooletu-" + votingDetails[3].neutral + 
-           ". Erapooletuks jäi-" + votingDetails[3].abstained + 
-           ". " + votingDetails[4].relatedDraft.title + 
-           ". Kohal-" + votingDetails[4].present + 
-           ". Puudus-" + votingDetails[4].absent + 
-           ". Poolt-" + votingDetails[4].inFavor + 
-           ". Vastu-" + votingDetails[4].against + 
-           ". Erapooletu-" + votingDetails[4].neutral + 
-           ". Erapooletuks jäi-" + votingDetails[4].abstained}
-  next: end
+formatResult:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_five_most_recent"
+    body:
+      data: ${votingDetails}
+  result: formattedVotings
+  next: assignResponse
 
-requestError:
-  return: "Request Error: failed to get last 5 votings data."
-  next: end
+assignResponse:
+  assign:
+    res: ${formattedVotings.response.body}
+  next: formatMessages
 
-dataFormattingError:
-  return: "Error: failed to format voting data"
-  next: end
+# format throgh DM bot response to messages
+formatMessages:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+  result: formatMessage
 
-assignResultsError:
-  return: "Error: failed to assign results"
-  next: end
-
-# assignResults: # will not be needed propbably.
-#   assign:
-#     sessions:
-#       - title: ${votingDetails[0].relatedDraft.title}
-#         present: ${votingDetails[0].present}
-#         absent: ${votingDetails[0].absent}
-#         inFavor: ${votingDetails[0].inFavor}
-#         against: ${votingDetails[0].against}
-#         neutral: ${votingDetails[0].neutral}
-#         abstained: ${votingDetails[0].abstained}
-#       - title: ${votingDetails[1].relatedDraft.title}
-#         present: ${votingDetails[1].present}
-#         absent: ${votingDetails[1].absent}
-#         inFavor: ${votingDetails[1].inFavor}
-#         against: ${votingDetails[1].against}
-#         neutral: ${votingDetails[1].neutral}
-#         abstained: ${votingDetails[1].abstained}
-#       - title: ${votingDetails[2].relatedDraft.title}
-#         present: ${votingDetails[2].present}
-#         absent: ${votingDetails[2].absent}
-#         inFavor: ${votingDetails[2].inFavor}
-#         against: ${votingDetails[2].against}
-#         neutral: ${votingDetails[2].neutral}
-#         abstained: ${votingDetails[2].abstained}
-#       - title: ${votingDetails[3].relatedDraft.title}
-#         present: ${votingDetails[3].present}
-#         absent: ${votingDetails[3].absent}
-#         inFavor: ${votingDetails[3].inFavor}
-#         against: ${votingDetails[3].against}
-#         neutral: ${votingDetails[3].neutral}
-#         abstained: ${votingDetails[3].abstained}
-#       - title: ${votingDetails[4].relatedDraft.title}
-#         present: ${votingDetails[4].present}
-#         absent: ${votingDetails[4].absent}
-#         inFavor: ${votingDetails[4].inFavor}
-#         against: ${votingDetails[4].against}
-#         neutral: ${votingDetails[4].neutral}
-#         abstained: ${votingDetails[4].abstained}
-#   error: assignResultsError
-#   next: returnResults
+return_result:
+  return: ${formatMessage.response.body}

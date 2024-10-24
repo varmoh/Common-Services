@@ -9,17 +9,13 @@ declaration:
 
 prepareVariables:
   assign:
+    chatId: ${incoming.params.chatId}
+    authorId: ${incoming.params.authorId}
     currentDate: ${new Date().toISOString().split('T')[0]} # yyyy-mm-dd
-    endDate: ${ incoming.params.endDate || currentDate}
-    startDate: ${ incoming.params.startDate || new Date(new Date(endDate).setMonth(new Date(endDate).getMonth() - 1)).toISOString().split('T')[0] } # yyyy-mm-dd
+    endDate: ${ incoming.params.input[0] || currentDate}
+    startDate: ${ incoming.params.input[1] || new Date(new Date(endDate).setMonth(new Date(endDate).getMonth() - 1)).toISOString().split('T')[0] } # yyyy-mm-dd
     lang: "ET"
-    memberName: ${incoming.params.memberName}
-  next: checkMember
-
-checkMember:
-  switch:
-    - condition: ${!memberName}
-      next: memberNotFound
+    memberName: ${incoming.params.input[3]}
   next: makeAPIRequest
 
 makeAPIRequest:
@@ -28,34 +24,37 @@ makeAPIRequest:
     url: "https://api.riigikogu.ee/api/statistics/participations/plenary?endDate=${endDate}&startDate=${startDate}&lang=${lang}"
     headers:
       accept: "application/json"
-  result: kohaloluData
-  error: returnError
-  next: filterMember
+  result: attendance
+  next: searchMember
 
-filterMember:
+searchMember:
   assign:
-    memberData: ${kohaloluData.response.body.find(member => member.fullName === memberName)}
-  next: checkMemberExists
+    memberData: ${attendance.response.body.find(member => member.fullName === memberName)}
+  next: assignResponse
 
-checkMemberExists:
-  switch:
-    - condition: ${memberData !== undefined && memberData !== null}
-      next: returnResult
-  next: memberNotFound
-
-assigReturnVariables:
+assignResponse:
   assign:
-    
-  next: returnResult
+    res: ${memberData.fullName + " on olnud perioodil " + startDate + " - " + endDate + " kohal " + memberData.participated + " korda ja puudunud " + memberData.absent + " korda."}
+  next: formatMessages
 
-returnResult:
-  return: ${memberData.fullName + " on olnud perioodil " + startDate + " - " + endDate + " kohal " + memberData.participated + " korda ja puudunud " + memberData.absent + " korda."}
-  next: end
+formatMessages:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+  result: formatMessage
 
-memberNotFound:
-  return: "Error: Member not found."
-  next: end
-
-returnError:
-  return: "Error: failed to get participation data."
-  next: end
+return_result:
+  return: ${formatMessage.response.body}

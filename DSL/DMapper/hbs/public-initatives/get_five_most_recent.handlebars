@@ -1,0 +1,53 @@
+<!--
+### Input example:
+{
+    "response": [
+        {
+            "uuid": "ec1731df-6d0a-4b55-a549-6a407d3d2ab0",
+            "votingNumber": 13457,
+            "type": {
+                "code": "AVALIK",
+                "value": "Avalik"
+            },
+            "description": "Lõpphääletus",
+            "startDateTime": "2024-10-23T22:14:30.897",
+            "endDateTime": "2024-10-23T22:14:50.887",
+            "present": 88,
+            "absent": 13,
+            "inFavor": 47,
+            "against": 12,
+            "neutral": 1,
+            "abstained": 41,
+            "relatedDraft": {
+                "uuid": "6f956dbc-4c15-411c-95bc-3488327522d1",
+                "title": "Rahvusvahelise Tööorganisatsiooni (ILO) töömaailmas esineva vägivalla ja ahistamise kõrvaldamist käsitleva konventsiooni (nr 190) ratifitseerimise seadus",
+                "mark": 469,
+                "copyOrOriginal": "ORIGINAL",
+                "_links": {
+                    "self": {
+                        "href": "https://api.riigikogu.ee/api/volumes/drafts/6f956dbc-4c15-411c-95bc-3488327522d1"
+                    }
+                }
+            },
+            "_links": {
+                "self": {
+                    "href": "https://api.riigikogu.ee/api/votings/ec1731df-6d0a-4b55-a549-6a407d3d2ab0"
+                }
+            }
+        },
+        ...
+    ]
+} 
+
+### Output example:
+{
+  "result": "\"Rahvusvahelise Tööorganisatsiooni (ILO) töömaailmas esineva vägivalla ja ahistamise kõrvaldamist käsitleva konventsiooni (nr 190) ratifitseerimise seadus\"\nOsalejaid: 88 kohal, 13 puudus.\nTulemus: 47 poolt, 12 vastu, 1 neutraalne, 41 erapooletu.\n\n
+  ...
+  "
+}
+
+-->
+{
+  "result": "5 viimast rahvaalgatust:\n{{#each response as |vote|}}\"{{vote.relatedDraft.title}}\"\nOsalejaid: {{vote.present}} kohal, {{vote.absent}} puudus.\nTulemus: {{vote.inFavor}} poolt, {{vote.against}} vastu, {{vote.neutral}} neutraalne, {{vote.abstained}} erapooletu.\n\n{{/each}}"
+}
+

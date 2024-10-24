@@ -9,6 +9,8 @@ declaration:
 
 prepareVariables:
   assign:
+    chatId: ${incoming.params.chatId}
+    authorId: ${incoming.params.authorId}
     phase: "sign"
     signingEndsAt: "${new Date().toISOString()}"
     order: "-signatureCount"
@@ -24,8 +26,46 @@ getEvents:
     headers:
       Accept: "${acceptHeader}"
   result: events
-  next: returnResult
+  next: assignEvents
 
-returnResult:
-  return: ${events.response.body}
-  next: end
+assignEvents:
+  assign:
+    res: ${events.response.body}
+  next: formatResult
+
+formatResult:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/public-initatives/get_most_popular.handlebars"
+    body:
+      data: ${res}
+  result: formattedInitiatives
+  next: assignResponse
+
+assignResponse:
+  assign:
+    res: ${formattedInitiatives.response.body}
+  next: formatMessages
+
+# format throgh DM bot response to messages
+formatMessages:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+  result: formatMessage
+
+return_result:
+  return: ${formatMessage.response.body}

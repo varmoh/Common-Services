@@ -9,6 +9,8 @@ declaration:
 
 prepareRequest:
   assign:
+    chatId: ${incoming.params.chatId}
+    authorId: ${incoming.params.authorId}
     lang: "ET"
   next: makeAPIRequest
 
@@ -29,12 +31,31 @@ formatResponse:
     against: ${votingData.response.body.against}
     neutral: ${votingData.response.body.neutral}
     abstained: ${votingData.response.body.abstained}
-  next: returnResult
+  next: assignResponse
 
-returnResult:
-  return: ${"'" + votingTitle+ "', Poolt on " + inFavor + ", Vastu on " + against + ", Neutraalsed " + neutral + ", Ei hääletanud " + abstained}
-  next: end
+assignResponse:
+  assign:
+    res: ${"'" + votingTitle+ "', Poolt on " + inFavor + ", Vastu on " + against + ", Neutraalsed " + neutral + ", Ei hääletanud " + abstained}
+  next: formatMessages
 
-returnError:
-  return: "Error: failed to get recent votings data."
-  next: end
+formatMessages:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+  result: formatMessage
+
+return_result:
+  return: ${formatMessage.response.body}

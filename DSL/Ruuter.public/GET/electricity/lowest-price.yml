@@ -12,7 +12,9 @@ declaration:
 # Prepare Dates based on userDate
 prepareDates:
   assign:
-    userDate: ${incoming.params.userDate || new Date().toISOString().split('T')[0]}  # yyyy-mm-dd
+    chatId: ${incoming.params.chatId}
+    authorId: ${incoming.params.authorId}
+    userDate: ${incoming.params.input[0] || new Date().toISOString().split('T')[0]}  # yyyy-mm-dd
     startDateTime: ${new Date(new Date(userDate).getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] + "T21:00:00.000Z"}
     endDateTime: ${userDate + "T20:59:59.000Z"}
   next: getPriceForPeriod
@@ -37,7 +39,33 @@ assignVariables:
     adjustedTimestamp: ${minPriceTimestamp + tallinnOffset} 
     adjustedHour: ${Math.floor((adjustedTimestamp % 86400) / 3600)}
     timeVar: ${("0" + adjustedHour).slice(-2) + ":00"}
-  next: returnResult
+  next: assignResponse
 
-returnResult:
-  return: ${[userDate, timeVar, minPrice]}
+assignResponse:
+  assign:
+    res: "Madalaim elektrihind on ${minPrice}, kell on ${timeVar}, kuupäeval ${userDate}"
+  next: formatMessages
+
+# format throgh DM bot response to messages
+formatMessages:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+  result: formatMessage
+
+return_result:
+  return: ${formatMessage.response.body}
+
