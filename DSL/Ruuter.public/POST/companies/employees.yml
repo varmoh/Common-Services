@@ -8,6 +8,12 @@ declaration:
   namespace: common-services
   allowlist:
     body:
+      - field: chatId
+        type: string
+        description: "Parameter 'chatId'"
+      - field: authorId
+        type: string
+        description: "Parameter 'authorId'"  
       - field: registry_code
         type: string
         description: "Parameter 'registry_code'"
@@ -21,22 +27,18 @@ declaration:
 
 extract_body:
   assign:
-    message: ${incoming.body.message}
+    registry_code: ${incoming.body.input[0]}
     chatId: ${incoming.body.chatId}
     authorId: ${incoming.body.authorId}
-    county: ${incoming.body.county}
-
-logstepPARAMEETER:
-  log: ${params}
+    county: ${incoming.body.input[0]}
 
 checkForParams:
   switch:
-    - condition: ${message != null}
+    - condition: ${registry_code != null}
       next: getWithCode
     - condition: ${county != null}
       next: getWithCounty
   next: getAll
-
 
 getWithCode:
   call: http.post
@@ -44,11 +46,9 @@ getWithCode:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
       id: "company-with-code"
-      params: { registry_code: "${message}", field: "workers" }
+      params: { registry_code: "${registry_code}", field: "workers" }
   result: res
   next: mapCodeData
-
-
 
 mapCodeData:
   call: http.post
@@ -59,28 +59,22 @@ mapCodeData:
     body:
       hits: ${res.response.body.hits.hits}
   result: codeMappedData
-#  next: checkMappedData
-
-logstepmapCODEDATA:
-  log: ${codeMappedData}
   next: checkMappedData
-
 
 checkMappedData:
   switch:
     - condition: ${codeMappedData.response.body.employees.length > 0}
-      next: return_code_result
+      next: assign_code_response
   next: return_no_companies_found
 
-return_code_result:
-  return: ${codeMappedData.response.body.employees[0]}
-  next: end
+assign_code_response:
+  assign:
+    res: ${codeMappedData.response.body.employees[0]}
+  next: format_messages
 
 return_no_companies_found:
   return: "No companies found"
   next: end
-
-
 
 getWithCounty:
   call: http.post
@@ -88,24 +82,25 @@ getWithCounty:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
       id: "companies-with-county"
-      params: { county: "${params.county}", field: "workers" }
+      params: { county: "${county}", field: "workers" }
   result: res
   next: mapCountyData
 
 mapCountyData:
   call: http.post
   args:
-    url: "[#DMAPPER]/hbs/common-services/get_total_with_county"
+    url: "[#DMAPPER]/common-services/hbs/get_total_with_county"
     headers:
       type: "json"
     body:
       aggregations: ${res.response.body.aggregations}
   result: countyMappedData
-  next: return_county_result
+  next: assign_county_response
 
-return_county_result:
-  return: ${countyMappedData.response.body}
-  next: end
+assign_county_response:
+  assign:
+    res: ${countyMappedData.response.body}
+  next: format_messages
 
 getAll:
   call: http.post

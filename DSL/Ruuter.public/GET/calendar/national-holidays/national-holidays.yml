@@ -52,11 +52,13 @@ formatResult:
   call: http.post
   args:
     url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holidays"
+    headers:
+      type: json
     body:
       data: ${holidayData.response.body.holidays}
   result: formattedHolidays
   next: assignResponse
-
+  
 assignResponse:
   assign:
     res: ${formattedHolidays.response.body}

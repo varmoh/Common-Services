@@ -58,7 +58,9 @@ validateHoliday:
 
 formatValue:
   assign:
-    res: "Tulev riigipüha on ${upcomingHoliday.name} - ${upcomingHoliday.date}"
+    res: {
+       "result": "Tulev riigipüha on ${upcomingHoliday.name} - ${upcomingHoliday.date}"
+    }
   next: formatMessages
 
 formatMessages:

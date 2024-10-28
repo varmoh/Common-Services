@@ -8,6 +8,12 @@ declaration:
   namespace: common-services
   allowlist:
     params:
+      - field: chatId
+        type: string
+        description: "Parameter 'chatId'"
+      - field: authorId
+        type: string
+        description: "Parameter 'authorId'"    
       - field: registry_code
         type: string
         description: "Parameter 'registry_code'"
@@ -21,10 +27,10 @@ declaration:
 
 extract_body:
   assign:
-    registry_code: ${incoming.body.registry_code}
+    registry_code: ${incoming.body.input[0]}
     chatId: ${incoming.body.chatId}
     authorId: ${incoming.body.authorId}
-    county: ${incoming.body.county}
+    county: ${incoming.body.input[0]}
 
 checkForParams:
   switch:
@@ -58,12 +64,13 @@ mapCodeData:
 checkMappedData:
   switch:
     - condition: ${codeMappedData.response.body.revenue.length > 0}
-      next: return_code_result
+      next: assign_code_response
   next: return_no_companies_found
 
-return_code_result:
-  return: ${codeMappedData.response.body.revenue[0]}
-  next: end
+assign_code_response:
+  assign:
+    res: ${codeMappedData.response.body.revenue[0]}
+  next: format_messages
 
 return_no_companies_found:
   return: "No companies found"
@@ -82,17 +89,18 @@ getWithCounty:
 mapCountyData:
   call: http.post
   args:
-    url: "[#DMAPPER]/hbs/common-services/get_total_with_county"
+    url: "[#DMAPPER]/common-services/hbs/get_total_with_county"
     headers:
       type: "json"
     body:
       aggregations: ${res.response.body.aggregations}
   result: countyMappedData
-  next: return_county_result
-
-return_county_result:
-  return: ${countyMappedData.response.body}
-  next: end
+  next: assign_county_response
+ 
+assign_county_response:
+  assign:
+    res: ${countyMappedData.response.body}
+  next: format_messages
 
 getAll:
   call: http.post

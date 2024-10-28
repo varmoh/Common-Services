@@ -8,6 +8,12 @@ declaration:
   namespace: common-services
   allowlist:
     params:
+      - field: chatId
+        type: string
+        description: "Parameter 'chatId'"
+      - field: authorId
+        type: string
+        description: "Parameter 'authorId'"  
       - field: message
         type: string
         description: "Registry code of the requested company"
@@ -23,7 +29,7 @@ declaration:
 
 extract_body:
   assign:
-    message: ${incoming.body.message}
+    message: ${incoming.body.input[0]}
     chatId: ${incoming.body.chatId}
     authorId: ${incoming.body.authorId}
 

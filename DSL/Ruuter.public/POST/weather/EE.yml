@@ -9,8 +9,8 @@ declaration:
 # Assigns key variables for processing the request, including API endpoints.
 assignVariables:
   assign:
-    chatId: ${incoming.params.chatId || "Win"}
-    authorId: ${incoming.params.authorId || "A bigger Win"}
+    chatId: ${incoming.body.chatId || "Win"}
+    authorId: ${incoming.body.authorId || "A bigger Win"}
     countryCode: ${"EE"} #${incoming.params.input[0] || "EE" } # defaults to estonian
     region: "tallinn" # ${ incoming.params.input[1]  || "tallinn"} # uncomment when publicapi.envir issue is solved
 
@@ -59,12 +59,23 @@ getWeather:
   args:
     url: "${ilmmicroserviceUrl}/mobileLocationForecast?latitude=${latitude}&longitude=${longitude}&stationId=${stationId}"
   result: weather
+  next: formatResult
+
+formatResult:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/weather/get_weather"
+    headers:
+      type: json
+    body:
+      data: ${weather.response.body}
+  result: formattedWeather
   next: assignResponse
 
 # Assigns the weather data response.
 assignResponse:
   assign:
-    res: ${weather.response.body}
+    res: ${formattedWeather.response.body}
   next: formatMessages
 
 # format throgh DM bot response to messages

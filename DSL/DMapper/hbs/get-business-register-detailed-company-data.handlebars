@@ -1,13 +1,13 @@
 {
-    "ariregistri_kood": {{ ariregistri_kood }},
-    "nimi": {{ nimi }},
+    "ariregistri_kood": "{{ keha.ariregistri_kood }}",
+    "nimi": "{{ keha.nimi }}",
     "sidevahendid": [
-    {{#each yldandmed.sidevahendid.item }}
+    {{#each keha.yldandmed.sidevahendid.item }}
         {
-            "liik": {{ liik }},
-            "sisu": {{ sisu }}
+            "liik": "{{ liik }}",
+            "sisu": "{{ sisu }}"
         }{{#unless @last}},{{/unless}}
     {{/each}}
     ],
-    "text": "{{nimi}} firma telefon on {{#each yldandmed.sidevahendid.item}}{{#if (eq liik 'TEL')}}{{sisu}}{{/if}}{{/each}} ja email on {{#each yldandmed.sidevahendid.item}}{{#if (eq liik 'EMAIL')}}{{sisu}}{{/if}}{{/each}}"
+    "text": "{{keha.nimi}} firma telefon on {{#each keha.yldandmed.sidevahendid.item}}{{#if (eq liik 'TEL')}}{{sisu}}{{/if}}{{/each}} ja email on {{#each keha.yldandmed.sidevahendid.item}}{{#if (eq liik 'EMAIL')}}{{sisu}}{{/if}}{{/each}}"
 }

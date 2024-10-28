@@ -1,6 +1,6 @@
 {
     "kasusaajad": [
-        {{#each kasusaajad.kasusaaja }}
+        {{#each keha.kasusaajad.kasusaaja }}
             {
                 "eesnimi": "{{ eesnimi }}",
                 "nimi": "{{ nimi }}",
@@ -14,5 +14,5 @@
             }{{#unless @last}},{{/unless}}
         {{/each}}
     ],
-    "text": "Tegelikud kasusaajad- {{#each kasusaajad.kasusaaja}}{{#if @first}}{{else}}; {{/if}}{{eesnimi}} {{nimi}} elab riigis {{aadress_riik_tekstina}} ja kontrolli teostamise viis on {{kontrolli_teostamise_viis_tekstina}}{{/each}}."
+    "text": "Tegelikud kasusaajad- {{#each keha.kasusaajad.kasusaaja}}{{#if @first}}{{else}}; {{/if}}{{eesnimi}} {{nimi}} elab riigis {{aadress_riik_tekstina}} ja kontrolli teostamise viis on {{kontrolli_teostamise_viis_tekstina}}{{/each}}."
 }

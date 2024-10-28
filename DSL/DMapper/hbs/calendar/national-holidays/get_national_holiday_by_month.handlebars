@@ -1,25 +1,3 @@
-<!--
-### Input example:
 {
-    "response": [
-        {
-            "date": "2024-06-23",
-            "name": "võidupüha"
-        },
-        {
-            "date": "2024-06-24",
-            "name": "jaanipäev"
-        }
-    ]
-}
-
-### Output example:
-{
-  "result": "Kõik riigipühad antud kuus on: \n*2024-06-23\n võidupüha\n\n*2024-06-24\n jaanipäev\n\n"
-}
-
--->
-
-{
-  "result": "Kõik riigipühad antud kuus on: \n{{#each response}}*{{date}}\n {{name}}\n\n{{/each}}"
+  "result": "Kõik riigipühad antud kuus on: \\n{{#each data}}*{{date}}\\n {{name}}\\n\\n{{/each}}"
 }

@@ -43,7 +43,9 @@ assignVariables:
 
 assignResponse:
   assign:
-    res: "Madalaim elektrihind on ${minPrice}, kell on ${timeVar}, kuupäeval ${userDate}"
+    res: {
+      "result": "Madalaim elektrihind on ${minPrice}, kell on ${timeVar}, kuupäeval ${userDate}"
+    }
   next: formatMessages
 
 # format throgh DM bot response to messages

@@ -10,7 +10,7 @@ prepare:
   assign: # MM - month
     chatId: ${incoming.params.chatId}
     authorId: ${incoming.params.authorId}
-    searchTerm: "${incoming.params.input || [(new Date().getMonth() + 1).toString()]}" # default to current month - ex."10"/MM for october 
+    searchTerm: "${incoming.params.input.split(',')[0] || [(new Date().getMonth() + 1).toString()]}" # default to current month - ex."10"/MM for october 
   next: makeApiCall
 
 makeApiCall:
@@ -63,18 +63,24 @@ checkHolidays:
 
 holidayNotFound:
   assign:
-    res: "Ei leia riigipühi antud kuus"
+    res: {
+      "result": "Ei leia riigipühi antud kuus"
+    }
   next: formatMessages
 
 assignSingleValue:
   assign:
-    res: "Antud kuus on ${filteredHolidays[0].name} - ${filteredHolidays[0].date}"
+    res: {
+      "result": "Antud kuus on ${filteredHolidays[0].name} - ${filteredHolidays[0].date}"
+    }
   next: formatMessages
 
 formatValue:
   call: http.post
   args:
     url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holiday_by_month"
+    headers:
+      type: json
     body:
       data: ${filteredHolidays}
   result: holiday

@@ -58,7 +58,9 @@ validateHoliday:
 
 formatValue:
   assign:
-    res: "Viimane riigipüha oli ${previousHoliday.name} - ${previousHoliday.date}"
+    res: {
+     "result": "Viimane riigipüha oli ${previousHoliday.name} - ${previousHoliday.date}"
+    }
   next: formatMessages
 
 formatMessages:

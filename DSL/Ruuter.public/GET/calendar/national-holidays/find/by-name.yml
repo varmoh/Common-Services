@@ -11,7 +11,7 @@ prepare:
   assign:
     chatId: ${incoming.params.chatId}
     authorId: ${incoming.params.authorId}
-    searchTerm: "${incoming.params.input}"
+    searchTerm: ${incoming.params.input.split(",")[0]}
   next: makeApiCall
 
 makeApiCall:
@@ -63,12 +63,16 @@ checkHoliday:
 
 holidayNotFound:
   assign:
-    res: "Ei leia sellist riigipüha"
+    res: {
+      "result": "Ei leia sellist riigipüha"
+    }
   next: formatMessages 
 
 formatValue:
   assign:
-    res: "${filteredHolidays[0].name.charAt(0).toUpperCase() + filteredHolidays[0].name.slice(1)} on ${filteredHolidays[0].date}"
+    res: {
+      "result": "${filteredHolidays[0].name.charAt(0).toUpperCase() + filteredHolidays[0].name.slice(1)} on ${filteredHolidays[0].date}"
+    }
   next: formatMessages
 
 formatMessages:

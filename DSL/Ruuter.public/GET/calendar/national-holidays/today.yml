@@ -62,12 +62,16 @@ checkHoliday:
 
 holidayNotFound:
   assign:
-    res: "Täna ei ole riigpüha."
+    res: {
+      "result": "Täna ei ole riigpüha."
+    }
   next: formatMessages
 
 formatValue:
   assign:
-    res: "Täna on ${holiday.name}"
+    res: {
+      "result": "Täna on ${holiday.name}"
+    }
   next: formatMessages
 
 formatMessages:

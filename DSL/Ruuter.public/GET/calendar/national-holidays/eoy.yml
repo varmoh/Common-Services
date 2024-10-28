@@ -61,6 +61,8 @@ formatResult:
   call: http.post
   args:
     url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holiday_eoy"
+    headers:
+      type: json
     body:
       data: ${holidaysEOY}
   result: formattedHolidays
