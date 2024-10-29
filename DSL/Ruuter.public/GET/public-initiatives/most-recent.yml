@@ -25,7 +25,6 @@ getEvents:
     headers:
       Accept: "${initiativeEventHeader}"
   result: events
-  error: returnError
   next: extractIds
 
 extractIds:
@@ -40,7 +39,6 @@ getFirstEvent:
     headers:
       Accept: "${initiativeHeader}"
   result: firstInitiative
-  error: returnError
   next: getSecondEvent
 
 getSecondEvent:
@@ -50,7 +48,6 @@ getSecondEvent:
     headers:
       Accept: "${initiativeHeader}"
   result: secondInitiative
-  error: returnError
   next: getThirdEvent
 
 getThirdEvent:
@@ -60,7 +57,6 @@ getThirdEvent:
     headers:
       Accept: "${initiativeHeader}"
   result: thirdInitiative
-  error: returnError
   next: getFourthEvent
 
 getFourthEvent:
@@ -70,7 +66,6 @@ getFourthEvent:
     headers:
       Accept: "${initiativeHeader}"
   result: fourthInitiative
-  error: returnError
   next: getFifthEvent
 
 getFifthEvent:
@@ -80,17 +75,36 @@ getFifthEvent:
     headers:
       Accept: "${initiativeHeader}"
   result: fifthInitiative
-  error: returnError
   next: assignVariables
 
 assignVariables:
   assign:
-    res:
-      first: ${firstInitiative.response.body}
-      second: ${secondInitiative.response.body}
-      third: ${thirdInitiative.response.body}
-      fourth: ${fourthInitiative.response.body}
-      fifth: ${fifthInitiative.response.body}
+    first: ${firstInitiative.response.body}
+    second: ${secondInitiative.response.body}
+    third: ${thirdInitiative.response.body}
+    fourth: ${fourthInitiative.response.body}
+    fifth: ${fifthInitiative.response.body}
+  next: formatResponse
+
+formatResponse:
+  assign:
+    res: {
+      "result" : "Viis viimast aktiivset algatust:
+        1. '${first.title}'
+          Kogutud allkirjad: ${first.signatureCount}/ min. allkirjad: ${first.signatureThreshold}
+
+        2. '${second.title}'
+          Kogutud allkirjad: ${second.signatureCount}/ min. allkirjad: ${second.signatureThreshold}
+
+        3. '${third.title}'
+          Kogutud allkirjad: ${third.signatureCount}/ min. allkirjad: ${third.signatureThreshold}
+
+        4. '${fourth.title}'
+          Kogutud allkirjad: ${fourth.signatureCount}/ min. allkirjad: ${fourth.signatureThreshold}
+
+        5. '${fifth.title}'
+          Kogutud allkirjad: ${fifth.signatureCount}/ min. allkirjad: ${fifth.signatureThreshold}"
+    }
   next: formatMessages
 
 formatMessages:
@@ -111,6 +125,8 @@ formatMessages:
           "created": "${new Date().toISOString()}",
         }
   result: formatMessage
+  next: returnResult
 
-return_result:
+returnResult:
   return: ${formatMessage.response.body}
+  next: end

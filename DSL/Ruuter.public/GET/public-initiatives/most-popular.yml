@@ -25,26 +25,38 @@ getEvents:
     url: "${rahvalagatus}/initiatives?phase=${phase}&signingEndsAt>${signingEndsAt}&order=${order}&limit=${limit}"
     headers:
       Accept: "${acceptHeader}"
-  result: events
-  next: assignEvents
+  result: initiatives
+  next: assignVariables
 
-assignEvents:
+assignVariables:
   assign:
-    res: ${events.response.body}
-  next: formatResult
+    initiatives: ${initiatives.response.body}
+    first: ${initiatives[0]}
+    second: ${initiatives[1]}
+    third: ${initiatives[2]}
+    fourth: ${initiatives[3]}
+    fifth: ${initiatives[4]}
+  next: formatResponse
 
-formatResult:
-  call: http.post
-  args:
-    url: "[#DMAPPER]/common-services/hbs/public-initatives/get_most_popular.handlebars"
-    body:
-      data: ${res}
-  result: formattedInitiatives
-  next: assignResponse
-
-assignResponse:
+formatResponse:
   assign:
-    res: ${formattedInitiatives.response.body}
+    res: {
+      "result": "Viis populaarsemat aktiivset algatust:
+        1. '${first.title}'
+          Kogutud allkirjad: ${first.signatureCount}/ min. allkirjad: ${first.signatureThreshold}
+
+        2. '${second.title}'
+          Kogutud allkirjad: ${second.signatureCount}/ min. allkirjad: ${second.signatureThreshold}
+
+        3. '${third.title}'
+          Kogutud allkirjad: ${third.signatureCount}/ min. allkirjad: ${third.signatureThreshold}
+
+        4. '${fourth.title}'
+          Kogutud allkirjad: ${fourth.signatureCount}/ min. allkirjad: ${fourth.signatureThreshold}
+
+        5. '${fifth.title}'
+          Kogutud allkirjad: ${fifth.signatureCount}/ min. allkirjad: ${fifth.signatureThreshold}"
+    }
   next: formatMessages
 
 # format throgh DM bot response to messages
@@ -66,6 +78,7 @@ formatMessages:
           "created": "${new Date().toISOString()}",
         }
   result: formatMessage
+  next: returnResult
 
-return_result:
+returnResult:
   return: ${formatMessage.response.body}
