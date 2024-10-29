@@ -9,8 +9,8 @@ declaration:
 # Assigns key variables for processing the request, including API endpoints.
 assignVariables:
   assign:
-    chatId: ${incoming.body.chatId || "Win"}
-    authorId: ${incoming.body.authorId || "A bigger Win"}
+    chatId: ${incoming.body.chatId}
+    authorId: ${incoming.body.authorId}
     countryCode: ${"EE"} #${incoming.params.input[0] || "EE" } # defaults to estonian
     region: "tallinn" # ${ incoming.params.input[1]  || "tallinn"} # uncomment when publicapi.envir issue is solved
 
@@ -19,6 +19,7 @@ assignVariables:
     ilmmicroserviceUrl: "https://ilmmicroservice.envir.ee/api/forecasts"
   next: getRegionData
 
+#--------------------------------------------------------------------------------------------------
 # Retrieves geographical data for the specified region from the gazetteer API.
 getRegionData:
   call: http.get
@@ -53,6 +54,7 @@ assignStationParameters:
     stationId: "199" # ${nearestWeatherStation.response.body.entries.entry[0].id} # uncomment when publicapi.envir issue is solved
   next: getWeather
 
+#--------------------------------------------------------------------------------------------------
 # Get weather data from selected weather station.
 getWeather:
   call: http.get
@@ -61,23 +63,23 @@ getWeather:
   result: weather
   next: formatResult
 
+#--------------------------------------------------------------------------------------------------
 formatResult:
-  call: http.post
-  args:
-    url: "[#DMAPPER]/common-services/hbs/weather/get_weather"
-    headers:
-      type: json
-    body:
-      data: ${weather.response.body}
-  result: formattedWeather
+  assign:
+    weather: ${weather.response.body.entries.entry[0]}
+    temperature: ${weather.tains}
+    windCold: ${weather.tuulekylm}
   next: assignResponse
 
 # Assigns the weather data response.
 assignResponse:
   assign:
-    res: ${formattedWeather.response.body}
+    res: {
+      "result": "Tallinnas on temperatuur ${temperature}°C, tuulekülm on ${windCold}°C"
+    }
   next: formatMessages
 
+#--------------------------------------------------------------------------------------------------
 # format throgh DM bot response to messages
 formatMessages:
   call: http.post
