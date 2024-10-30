@@ -2,15 +2,34 @@ declaration:
   name: "Holiday Filter by Month"
   description: "Fetches and filters Estonian national holidays for a specified month in 2024."
   parameters:
-    - month: "The month (1-12) for which to retrieve holidays."
-  method: "get"
-  return: "json"
+    - month: "The month for which to retrieve holidays."
+  method: get
+  return: json
 
 prepare:
-  assign: # MM - month
-    chatId: ${incoming.params.chatId}
-    authorId: ${incoming.params.authorId}
-    searchTerm: "${incoming.params.input.split(',')[0] || [(new Date().getMonth() + 1).toString()]}" # default to current month - ex."10"/MM for october 
+  assign:
+    chatId: "${incoming.params.chatId}"
+    authorId: "${incoming.params.authorId}"
+    month: "${incoming.params.input.split(',')[0]}"
+    monthMap:
+      map:
+        "jaanuar": "01"
+        "veebruar": "02"
+        "märts": "03"
+        "aprill": "04"
+        "mai": "05"
+        "juuni": "06"
+        "juuli": "07"
+        "august": "08"
+        "september": "09"
+        "oktoober": "10"
+        "november": "11"
+        "detsember": "12"
+  next: prepareMonth
+
+prepareMonth:
+  assign:
+    month: ${monthMap.map[month]}
   next: makeApiCall
 
 makeApiCall:
@@ -45,33 +64,34 @@ makeApiCall:
         - date: "2024-12-26"
           name: "teine jõulupüha"
   result: holidayData
-  next: filterHolidaysByMonth
+  next: filterHolidays
 
-filterHolidaysByMonth:
+filterHolidays:
   assign:
-    filteredHolidays: ${holidayData.response.body.holidays.filter(holiday => !isNaN(searchTerm[0]) && parseInt(searchTerm[0]) >= 1 && parseInt(searchTerm[0]) <= 12 && (new Date(holiday.date).getMonth() + 1 === parseInt(searchTerm[0])))}
+    holidays: ${holidayData.response.body.holidays.filter(holiday => holiday.date.slice(5, 7) === month.padStart(2, '0'))}
   next: checkHolidays
 
+#--------------------------------------------------------------------------------------------------
 checkHolidays:
   switch:
-    - condition: ${filteredHolidays.length < 1}
+    - condition: ${holidays.length < 1}
       next: holidayNotFound
-    - condition: ${filteredHolidays.length === 1}
+    - condition: {holidays.length === 1}
       next: assignSingleValue
-    - condition: ${filteredHolidays.length > 1}
+    - condition: ${holidays.length > 1}
       next: formatValue
 
 holidayNotFound:
   assign:
     res: {
-      "result": "Ei leia riigipühi antud kuus"
+      "result": "Antud kuus ei ole riigpühi"
     }
   next: formatMessages
 
 assignSingleValue:
   assign:
     res: {
-      "result": "Antud kuus on ${filteredHolidays[0].name} - ${filteredHolidays[0].date}"
+      "result": "Antud kuus on ${holidays[0].name} - ${holidays[0].date}"
     }
   next: formatMessages
 
@@ -82,10 +102,11 @@ formatValue:
     headers:
       type: json
     body:
-      data: ${filteredHolidays}
+      data: ${holidays}
   result: holiday
   next: assignResponse
 
+#--------------------------------------------------------------------------------------------------
 assignResponse:
   assign:
     res: ${holiday.response.body}
@@ -110,8 +131,8 @@ formatMessages:
           "created": "${new Date().toISOString()}",
         }
   result: formatMessage
-  next: return_result
+  next: returnResult
 
-return_result:
+returnResult:
   return: ${formatMessage.response.body}
   next: end

@@ -7,21 +7,18 @@ declaration:
   returns: json
 
 prepare:
-  # Assign incoming 'name' parameter to 'searchTerm'
   assign:
     chatId: ${incoming.params.chatId}
     authorId: ${incoming.params.authorId}
-    searchTerm: ${incoming.params.input.split(",")[0]}
+    holidayName: ${incoming.params.input.split(",")[0]}
   next: makeApiCall
 
 makeApiCall:
-  # Mock API call returning 2024 holidays
   call: reflect.mock
   args:
     url: "www.example.com"
     response: 
       holidays:
-        # List of holidays
         - date: "2024-01-01"
           name: "uusaasta"
         - date: "2024-02-24"
@@ -46,16 +43,15 @@ makeApiCall:
           name: "esimene jõulupüha"
         - date: "2024-12-26"
           name: "teine jõulupüha"
-  result: holidayData
-  next: filterHolidaysByName
+  result: data
+  next: filterHolidays
 
-filterHolidaysByName:
+filterHolidays:
   assign:
-    filteredHolidays: ${holidayData.response.body.holidays.filter(holiday => holiday.name.toLowerCase().includes(searchTerm[0].toLowerCase()))}
+    filteredHolidays: ${data.response.body.holidays.filter(holiday => holiday.name.toLowerCase().includes(holidayName.toLowerCase()))}
   next: checkHoliday
 
 checkHoliday:
-  # Check if no holidays match
   switch:
     - condition: ${filteredHolidays.length < 1}
       next: holidayNotFound
@@ -93,6 +89,7 @@ formatMessages:
           "created": "${new Date().toISOString()}",
         }
   result: formatMessage
+  next: returnResult
 
-return_result:
+returnResult:
   return: ${formatMessage.response.body}
