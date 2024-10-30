@@ -76,7 +76,7 @@ checkHolidays:
   switch:
     - condition: ${holidays.length < 1}
       next: holidayNotFound
-    - condition: {holidays.length === 1}
+    - condition: ${holidays.length === 1}
       next: assignSingleValue
     - condition: ${holidays.length > 1}
       next: formatValue
