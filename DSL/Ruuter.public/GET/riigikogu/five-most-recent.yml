@@ -11,7 +11,7 @@ prepareVariables:
   assign:
     chatId: ${incoming.params.chatId}
     authorId: ${incoming.params.authorId}
-    offSet: 5 # to get start date withe enough data
+    offSet: 90 # get time period with enough data (90 days)
     end: ${new Date().toISOString().split('T')[0]}
     start: ${new Date(new Date(end).setDate(new Date(end).getDate() - offSet)).toISOString().split('T')[0]} 
   next: makeAPIRequest
@@ -25,26 +25,46 @@ makeAPIRequest:
   result: votingData
   next: votingDataFormatting
 
+# Extracts the 5 most recent public votings related to drafts, sorted by date
 votingDataFormatting:
   assign:
-    recentVotings: ${votingData.response.body.slice(0, 10)}
-    votingDetails: ${recentVotings.flatMap(session => session.votings)
+    votingDetails: ${votingData.response.body
+      .flatMap(session => session.votings)
       .filter(voting => voting.type.value === "Avalik" && voting.relatedDraft)
-      .sort((voting1, voting2) => new Date(voting2.startDateTime) - new Date(voting1.startDateTime)).slice(0, 5)}  # Take the first 5 items
+      .sort((voting1, voting2) => new Date(voting2.startDateTime) - new Date(voting1.startDateTime))
+      .slice(0, 5)}
   next: formatResult
 
 formatResult:
-  call: http.post
-  args:
-    url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_five_most_recent"
-    body:
-      data: ${votingDetails}
-  result: formattedVotings
-  next: assignResponse
-
-assignResponse:
   assign:
-    res: ${formattedVotings.response.body}
+    first: ${votingDetails[0]}
+    second: ${votingDetails[1]}
+    third: ${votingDetails[2]}
+    fourth: ${votingDetails[3]}
+    fifth: ${votingDetails[4]}
+    res: {
+      "result": "Viis viimast hääletustulemust:
+      
+      1. '${first.relatedDraft.title}'
+          
+          'Kohal: ${first.present}, Puudus: ${first.absent}, Poolt: ${first.inFavor} Vastu: ${first.against}, Erapooletu: ${first.neutral}, Ei hääletanud: ${first.abstained}'
+      
+      2. '${second.relatedDraft.title}'
+
+          'Kohal: ${second.present}, Puudus: ${second.absent}, Poolt: ${second.inFavor} Vastu: ${second.against}, Erapooletu: ${second.neutral}, Ei hääletanud: ${second.abstained}'
+      
+      3. '${third.relatedDraft.title}'
+
+          'Kohal: ${third.present}, Puudus: ${third.absent}, Poolt: ${third.inFavor} Vastu: ${third.against}, Erapooletu: ${third.neutral}, Ei hääletanud: ${third.abstained}'
+      
+      4. '${fourth.relatedDraft.title}'
+
+          'Kohal: ${fourth.present}, Puudus: ${fourth.absent}, Poolt: ${fourth.inFavor} Vastu: ${fourth.against}, Erapooletu: ${fourth.neutral}, Ei hääletanud: ${fourth.abstained}'
+      
+      5. '${fifth.relatedDraft.title}'
+
+          'Kohal: ${fifth.present}, Puudus: ${fifth.absent}, Poolt: ${fifth.inFavor} Vastu: ${fifth.against}, Erapooletu: ${fifth.neutral}, Ei hääletanud: ${fifth.abstained}'"
+    }
   next: formatMessages
 
 # format throgh DM bot response to messages
@@ -65,7 +85,8 @@ formatMessages:
           "authorTimestamp": "${new Date().toISOString()}",
           "created": "${new Date().toISOString()}",
         }
-  result: formatMessage
+  result: 
+  next: returnResult
 
 return_result:
   return: ${formatMessage.response.body}
