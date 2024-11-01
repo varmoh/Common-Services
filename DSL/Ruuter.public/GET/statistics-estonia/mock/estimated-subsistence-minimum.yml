@@ -1,0 +1,145 @@
+declaration:
+  call: declare
+  version: 0.1
+  name: "MOCK - Estimated Subsistence Minimum"
+  description: "Provides mock information about Estimated Subsistence Minimum"
+  method: post
+  returns: json
+  namespace: common-services
+
+prepareVariables:
+  assign:
+    chatId: ${incoming.params.chatId}
+    authorId: ${incoming.params.authorId}
+    lastYear: "${(new Date().getFullYear() - 1).toString()}" # YYYY - last year
+  next: makeAPIRequest
+
+makeAPIRequest:
+  call: reflect.mock # POST request
+  args:
+    request:
+      url: "https://andmed.stat.ee/api/v1/en/stat/LE27"
+    body:
+      query:
+        - code: "Näitaja"  # Ensure it's in quotes
+          selection:
+            filter: "item"
+            values:
+              - "1"  # Ensure it's a string
+        - code: "Aasta"  # Ensure it's in quotes
+          selection:
+            filter: "item"
+            values:
+              - ${lastYear}  # Change to a string without decimal
+    response:
+      format: "json-stat2"
+      request:
+        url: "https://andmed.stat.ee/api/v1/en/stat/LE27"
+        query: {}
+        headers: {}
+        body:
+          query:
+            - code: "Näitaja"
+              selection:
+                filter: "item"
+                values: ["1"]
+            - code: "Aasta"
+              selection:
+                filter: "item"
+                values: ["${lastYear}"]
+          response:
+            format: "json-stat2"
+        plaintext: null
+        contentType: null
+        originalUrl: ""
+        dynamicParameters: false
+      response:
+        headers:
+          cache-control: ["private,private, no-cache, must-revalidate"]
+          content-type: ["application/json; charset=utf-8"]
+          access-control-allow-origin: ["*"]
+          set-cookie:
+            - "rxid=d37cb131-6435-4e02-b425-96bea150d3dd; path=/; secure; SameSite=Strict"
+            - "SERVERID=s2; path=/"
+          x-xss-protection: ["1; mode=block"]
+          content-security-policy:
+            - "script-src 'unsafe-inline' 'unsafe-eval' 'self' *.stat.ee www.googletagmanager.com *.google-analytics.com *.analytics.google.com *.survicate.com; style-src 'unsafe-inline' 'self' *.stat.ee fonts.googleapis.com *.survicate.com; font-src data: 'self' *.stat.ee fonts.gstatic.com *.survicate.com; img-src data: 'self' *.stat.ee *.google-analytics.com *.analytics.google.com *.google.com *.google.ee; connect-src 'self' *.stat.ee *.google-analytics.com *.analytics.google.com stats.g.doubleclick.net *.survicate.com; frame-src 'self' *.stat.ee *.survicate.com *.youtube.com; default-src 'self' *.stat.ee;"
+          date: ["Fri, 25 Oct 2024 10:59:35 GMT"]
+          content-length: ["597"]
+          referrer-policy: ["origin-when-cross-origin"]
+          x-content-type-options: ["nosniff"]
+          strict-transport-security: ["max-age=16000000; includeSubDomains; preload;"]
+          x-frame-options: ["SAMEORIGIN"]
+        body:
+          class: "dataset"
+          label: "LE27: ESTIMATED SUBSISTENCE MINIMUM PER 30 DAYS FOR ONE PERSON HOUSEHOLD by Indicator and Year"
+          source: "Statistics Estonia"
+          updated: "2019-01-24T06:00:00Z"
+          id: ["Näitaja", "Aasta"]
+          size: [1, 1]
+          dimension:
+            Näitaja:
+              extension:
+                show: "value"
+              label: "Indicator"
+              category:
+                index: { "1": 0 }
+                label: { "1": "Estimated subsistence minimum" }
+            Aasta:
+              extension:
+                show: "value"
+              label: "Year"
+              category:
+                index: { "2023": 0 }
+                label: { "2023": "2023" }
+          value: [338.23]
+          role:
+            time: ["Aasta"]
+          version: "2.0"
+          extension:
+            px:
+              tableid: "LE27"
+              decimals: 2
+        statusCodeValue: 200
+        statusCode: "OK"
+      requestId: null
+  result: subsistence
+  next: assingResult
+
+assingResult:
+  assign: 
+    res: ${subsistence.response.body.value}
+  next: formatMessages
+
+formatMessages:
+  call: reflect.mock # post
+  args:
+    request:
+      url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+      headers:
+        type: json
+      body:
+        data:
+          {
+            "botMessages": "${[res]}",
+            "chatId": "${chatId}",
+            "authorId": "${authorId}",
+            "authorFirstName": "",
+            "authorLastName": "",
+            "authorTimestamp": "${new Date().toISOString()}",
+            "created": "${new Date().toISOString()}",
+          }
+    response:
+      body:
+        botMessages: "${[res]}"
+        chatId: "${chatId}"
+        authorId: "${authorId}"
+        authorFirstName: ""
+        authorLastName: ""
+        authorTimestamp: "${new Date().toISOString()}"
+        created: "${new Date().toISOString()}"
+
+  result: formatMessage
+
+return_result:
+  return: ${formatMessage.response.body}
