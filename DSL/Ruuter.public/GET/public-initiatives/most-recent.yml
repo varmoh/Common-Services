@@ -89,20 +89,16 @@ assignVariables:
 formatResponse:
   assign:
     res: {
-      "result" : "Viis viimast aktiivset algatust:
-        1. '${first.title}'
-          Kogutud allkirjad: ${first.signatureCount}/ min. allkirjad: ${first.signatureThreshold}
-
-        2. '${second.title}'
-          Kogutud allkirjad: ${second.signatureCount}/ min. allkirjad: ${second.signatureThreshold}
-
-        3. '${third.title}'
-          Kogutud allkirjad: ${third.signatureCount}/ min. allkirjad: ${third.signatureThreshold}
-
-        4. '${fourth.title}'
-          Kogutud allkirjad: ${fourth.signatureCount}/ min. allkirjad: ${fourth.signatureThreshold}
-
-        5. '${fifth.title}'
+      "result" : "Viis viimast aktiivset algatust:\\n
+        1. ${first.title}\\n
+          Kogutud allkirjad: ${first.signatureCount}/ min. allkirjad: ${first.signatureThreshold}\\n\\n
+        2. ${second.title}\\n
+          Kogutud allkirjad: ${second.signatureCount}/ min. allkirjad: ${second.signatureThreshold}\\n\\n
+        3. ${third.title}\\n
+          Kogutud allkirjad: ${third.signatureCount}/ min. allkirjad: ${third.signatureThreshold}\\n\\n
+        4. ${fourth.title}\\n
+          Kogutud allkirjad: ${fourth.signatureCount}/ min. allkirjad: ${fourth.signatureThreshold}\\n\\n
+        5. ${fifth.title}\\n
           Kogutud allkirjad: ${fifth.signatureCount}/ min. allkirjad: ${fifth.signatureThreshold}"
     }
   next: formatMessages

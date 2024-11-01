@@ -33,7 +33,7 @@ votingDataFormatting:
       .filter(voting => voting.type.value === "Avalik" && voting.relatedDraft)
       .sort((voting1, voting2) => new Date(voting2.startDateTime) - new Date(voting1.startDateTime))
       .slice(0, 5)}
-  next: formatResult
+    next: formatResult
 
 formatResult:
   assign:
@@ -43,27 +43,17 @@ formatResult:
     fourth: ${votingDetails[3]}
     fifth: ${votingDetails[4]}
     res: {
-      "result": "Viis viimast hääletustulemust:
-      
-      1. '${first.relatedDraft.title}'
-          
-          'Kohal: ${first.present}, Puudus: ${first.absent}, Poolt: ${first.inFavor} Vastu: ${first.against}, Erapooletu: ${first.neutral}, Ei hääletanud: ${first.abstained}'
-      
-      2. '${second.relatedDraft.title}'
-
-          'Kohal: ${second.present}, Puudus: ${second.absent}, Poolt: ${second.inFavor} Vastu: ${second.against}, Erapooletu: ${second.neutral}, Ei hääletanud: ${second.abstained}'
-      
-      3. '${third.relatedDraft.title}'
-
-          'Kohal: ${third.present}, Puudus: ${third.absent}, Poolt: ${third.inFavor} Vastu: ${third.against}, Erapooletu: ${third.neutral}, Ei hääletanud: ${third.abstained}'
-      
-      4. '${fourth.relatedDraft.title}'
-
-          'Kohal: ${fourth.present}, Puudus: ${fourth.absent}, Poolt: ${fourth.inFavor} Vastu: ${fourth.against}, Erapooletu: ${fourth.neutral}, Ei hääletanud: ${fourth.abstained}'
-      
-      5. '${fifth.relatedDraft.title}'
-
-          'Kohal: ${fifth.present}, Puudus: ${fifth.absent}, Poolt: ${fifth.inFavor} Vastu: ${fifth.against}, Erapooletu: ${fifth.neutral}, Ei hääletanud: ${fifth.abstained}'"
+      "result": 'Viis viimast hääletustulemust:\n\n
+        1. ${first.relatedDraft.title.replace(/"/g, "")}\n\n
+          Kohal: ${first.present}\nPuudus: ${first.absent}\nPoolt: ${first.inFavor}\nVastu: ${first.against}\nErapooletu: ${first.neutral}\nEi hääletanud: ${first.abstained}\n\n
+        2. ${second.relatedDraft.title.replace(/"/g, "")}\n\n
+          Kohal: ${second.present}\nPuudus: ${second.absent}\nPoolt: ${second.inFavor}\nVastu: ${second.against}\nErapooletu: ${second.neutral}\nEi hääletanud: ${second.abstained}\n\n
+        3. ${third.relatedDraft.title.replace(/"/g, "")}\n\n
+          Kohal: ${third.present}\nPuudus: ${third.absent}\nPoolt: ${third.inFavor}\nVastu: ${third.against}\nErapooletu: ${third.neutral}\nEi hääletanud: ${third.abstained}\n\n
+        4. ${fourth.relatedDraft.title.replace(/"/g, "")}\n\n
+          Kohal: ${fourth.present}\nPuudus: ${fourth.absent}\nPoolt: ${fourth.inFavor}\nVastu: ${fourth.against}\nErapooletu: ${fourth.neutral}\nEi hääletanud: ${fourth.abstained}\n\n
+        5. ${fifth.relatedDraft.title.replace(/"/g, "")}\n\n  
+          Kohal: ${fifth.present}\nPuudus: ${fifth.absent}\nPoolt: ${fifth.inFavor}\nVastu: ${fifth.against}\nErapooletu: ${fifth.neutral}\nEi hääletanud: ${fifth.abstained}'   
     }
   next: formatMessages
 
@@ -85,8 +75,9 @@ formatMessages:
           "authorTimestamp": "${new Date().toISOString()}",
           "created": "${new Date().toISOString()}",
         }
-  result: 
-  next: returnResult
+  result: formatMessage
+  next: return_result
 
 return_result:
   return: ${formatMessage.response.body}
+
