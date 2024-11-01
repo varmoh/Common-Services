@@ -5,7 +5,7 @@
         "type": "text"
       },
       "name": {
-        "type": "string"
+        "type": "text"
       },
       "type": {
         "type": "text"
