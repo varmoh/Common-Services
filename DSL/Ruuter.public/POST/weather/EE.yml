@@ -11,9 +11,7 @@ assignVariables:
   assign:
     chatId: ${incoming.body.chatId}
     authorId: ${incoming.body.authorId}
-    countryCode: ${"EE"} #${incoming.params.input[0] || "EE" } # defaults to estonian
-    region: "tallinn" # ${ incoming.params.input[1]  || "tallinn"} # uncomment when publicapi.envir issue is solved
-
+    region: "${incoming.body.input[0] || 'tallinn'}"
     gazeteerUrl: "https://inaadress.maaamet.ee/inaadress"
     publicapiUrl: "https://publicapi.envir.ee/v1/combinedWeatherData"
     ilmmicroserviceUrl: "https://ilmmicroservice.envir.ee/api/forecasts"
@@ -24,34 +22,55 @@ assignVariables:
 getRegionData:
   call: http.get
   args:
-    url: "${gazeteerUrl}/gazetteer?features=EHAK&results=3&address=${region}"
+    url: "${gazeteerUrl}/gazetteer"
+    query:
+      features: "EHAK"
+      results: "3"
+      address: ${region}
   result: regionData
-  next: assingCoordinates
+  next: checkRegionData
+
+checkRegionData:
+  switch:
+    - condition: ${regionData.response.body.addresses != null}
+      next: assingCoordinates
+  next: assign_region_error
+
+# Assigns the weather data response.
+assign_region_error:
+  assign:
+    res: {
+      "result": "${region} kohta temperatuuriandmeid ei leitud"
+    }
+  next: formatMessages
 
 # Extracts longitude and latitude from the region data for further API calls.
 assingCoordinates:
   assign:
     longitude: ${regionData.response.body.addresses[0].viitepunkt_l}
     latitude: ${regionData.response.body.addresses[0].viitepunkt_b}
-  next: assignStationParameters
+  next: getNearestStation
 
-# # uncomment when publicapi.envir issue is solved
-# # # Finds the nearest weather station using the provided coordinates.
-# # getNearestStation:
-# #   call: http.get
-# #   args:
-# #     # url: https://publicapi.envir.ee/v1/combinedWeatherData/nearestStationByCoordinates?longitude=24.7535&latitude=59.4370
-# #     url: "${publicapiUrl}/nearestStationByCoordinates?longitude=${longitude}&latitude=${latitude}"
-# #     header:
-# #       Accept: "application/json"
-# #   result: nearestWeatherStation
-# #   next: assignStationParameters
+# Finds the nearest weather station using the provided coordinates.
+getNearestStation:
+  call: http.get
+  args:
+    url: "${publicapiUrl}/nearestStationByCoordinates"
+    query:
+      longitude: ${longitude}
+      latitude: ${latitude}
+    headers:
+      Content-type: ""
+      Accept: "application/json"
+    contentType:  json_override
+  result: nearestWeatherStation
+  next: assignStationParameters
 
 
 # Assigns the station ID - nearest weather station response.
 assignStationParameters:
   assign:
-    stationId: "199" # ${nearestWeatherStation.response.body.entries.entry[0].id} # uncomment when publicapi.envir issue is solved
+    stationId: ${nearestWeatherStation.response.body.entries.entry[0].id}
   next: getWeather
 
 #--------------------------------------------------------------------------------------------------
@@ -59,7 +78,11 @@ assignStationParameters:
 getWeather:
   call: http.get
   args:
-    url: "${ilmmicroserviceUrl}/mobileLocationForecast?latitude=${latitude}&longitude=${longitude}&stationId=${stationId}"
+    url: "${ilmmicroserviceUrl}/mobileLocationForecast"
+    query:
+      latitude: ${latitude}
+      longitude: ${longitude}
+      stationId: ${stationId}
   result: weather
   next: formatResult
 
@@ -75,7 +98,7 @@ formatResult:
 assignResponse:
   assign:
     res: {
-      "result": "Tallinnas on temperatuur ${temperature}°C, tuulekülm on ${windCold}°C"
+      "result": "Sisse ${region} on temperatuur ${temperature}°C, tuulekülm on ${windCold}°C"
     }
   next: formatMessages
 
