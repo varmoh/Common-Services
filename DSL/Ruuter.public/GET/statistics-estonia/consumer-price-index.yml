@@ -1,80 +1,131 @@
-variables_step:
-  assign:
-    year: ${new Date().getFullYear().toString()}
-    month: ${(new Date().getMonth() + 1).toString()}
-    attempts: 0
+declaration:
+  call: declare
+  version: 0.1
+  name: "Consumer Price Index Query"
+  description: "Provides CPI change information per month"
+  method: post
+  returns: json
+  namespace: common-services
 
-post_step:
+# Month mapping defined in the required format
+prepareVariables:
+  assign:
+    chatId: ${incoming.params.chatId}
+    authorId: ${incoming.params.authorId}
+    monthMap:
+      months:
+        jaanuar: "1"
+        veebruar: "2"
+        märts: "3"
+        aprill: "4"
+        mai: "5"
+        juuni: "6"
+        juuli: "7"
+        august: "8"
+        september: "9"
+        oktoober: "10"
+        november: "11"
+        detsember: "12"
+    input: "${incoming.params.input ? incoming.params.input.split(',') : []}"
+    indicator: "${input[0] || 'previous_month'}"
+    months: "${input[1] ? input[1].split('_') : [(new Date().getMonth()).toString()]}"
+    years: "${input[2] ? input[2].split('_') : [(new Date().getFullYear() - 1).toString()]}"
+  next: check_for_month
+
+check_for_month:
+  switch:
+    - condition: ${(months[0] % 1 === 0)}
+      next: makeAPIRequest
+  next: prepare_months 
+
+prepare_months:
+  assign:
+    months: "${(months.map(month => monthMap.months[month]).filter(num => num !== undefined)).length > 0 ? months.map(month => monthMap.months[month]).filter(num => num !== undefined) : [(new Date().getMonth()).toString()]}"
+  next: makeAPIRequest
+    
+# API request step
+makeAPIRequest:
   call: http.post
   args:
     url: https://andmed.stat.ee/api/v1/en/stat/IA021
     body:
       query:
+        - code: "Näitaja"
+          selection:
+            filter: "item"
+            values: "${indicator === 'previous_year' ? ['1'] : ['2']}"
         - code: "Aasta"
           selection:
             filter: "item"
-            values:
-              - ${year}
+            values: ${years}
         - code: "Kuu"
           selection:
             filter: "item"
-            values:
-              - ${month}
+            values: ${months}
       response:
         format: "json-stat2"
   result: statistics
-  next: check_results
+  next: assign_statistics_response
 
-check_results:
-  switch:
-    - condition: ${attempts > 12}
-      next: force_end_step
-    - condition: ${statistics.response.body.value[0] == null}
-      next: try_second_month_step
-    - condition: ${statistics.response.body.value[0] != null}
-      next: success_step
-
-try_second_month_step:
-  switch:
-    - condition: ${month == "1"}
-      next: december_step
-    - condition: ${month != "1"}
-      next: subtraction_step
-
-december_step:
+assign_statistics_response:
   assign:
-    month: 12
-    year: ${year - 1}
-    attempts: ${attempts + 1}
-  next: post_step
+    stat_res: ${statistics.response.body}
+  next: check_for_error
 
-subtraction_step:
-  assign:
-    month: ${month - 1}
-    attempts: ${attempts + 1}
-  next: post_step
-
-success_step:
-  assign:
-    same_month: ${statistics.response.body.value[0]}
-    last_month: ${statistics.response.body.value[1]}
-  next: switch_step
-
-switch_step:
+check_for_error:
   switch:
-    - condition: ${attempts === 0}
-      next: return_success
-    - condition: ${attempts > 0}
-      next: return_fail
+    - condition: ${stat_res === 'Bad Request'}
+      next: assign_error
+  next: format_stats
 
-force_end_step:
-  return: ${"Andmeid ei leitud."}
-  next: end
+assign_error:
+  assign:
+    res: {
+      "result": "Selle perioodi kohta tarbijahinnaindeksi andmeid ei leitud"
+    }
+  next: format_messages
 
-return_success:
-  return: ${"Kuu " + month + " Tarbijahinnaindeksi muutus võrreldes eelmise aasta sama kuuga on " + same_month + "%. Tarbijahinnaindeksi muutus võrreldes eelmise kuuga on " + last_month + "%."}
-  next: end
+format_stats:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/statistics-estonia/get_consumer_price_index"
+    headers:
+      type: json
+    body:
+      data: {
+        "indicator": "${indicator}",
+        "years": "${stat_res.dimension.Aasta.category.index}",
+        "months": "${stat_res.dimension.Kuu.category.label}",
+        "value": "${stat_res.value}"
+      }
+  result: format_stats_res
+  next: assign_result
 
-return_fail:
-  return: ${"Antud kuu kohta andmeid veel avalikustatud ei ole. Viimased andmed avalikustati " + month + "." + year + ", mil tarbijahinnaindeksi muutus võrreldes eelmise aasta sama kuuga on " + same_month + "%. Tarbijahinnaindeksi muutus võrreldes sellele eelneva kuuga on " + last_month + "%."}
+assign_result:
+  assign:
+    res: ${format_stats_res.response.body}
+  next: format_messages
+
+format_messages:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+  result: formatMessage
+  next: return_result
+
+return_result:
+  return: ${formatMessage.response.body}
   next: end
