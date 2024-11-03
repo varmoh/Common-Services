@@ -1,0 +1,3 @@
+{
+   "result": "{{#if (eq data.indicator "previous_month")}}### Tarbijahinnaindeksi muutus võrreldes eelmise kuuga{{else if (eq data.indicator "previous_year")}}### Tarbijahinnaindeksi muutus võrreldes eelmise aasta sama kuuga{{/if}}{{#each data.years}}** {{@key}} **{{#each ../data.months}}{{this}}: {{lookup ../value @key}}{{/each}}{{/each}}"
+}
