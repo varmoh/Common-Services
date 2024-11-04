@@ -76,35 +76,46 @@ check_for_error:
   switch:
     - condition: ${stat_res === 'Bad Request'}
       next: assign_error
-  next: format_stats
+  next: assign_result
 
 assign_error:
   assign:
     res: {
-      "result": "Selle perioodi kohta tarbijahinnaindeksi andmeid ei leitud"
+      "result": "Selle perioodi kohta hinnaindeksi andmeid ei leitud"
     }
   next: format_messages
 
-format_stats:
-  call: http.post
-  args:
-    url: "[#DMAPPER]/common-services/hbs/statistics-estonia/get_consumer_price_index"
-    headers:
-      type: json
-    body:
+assign_result:
+  assign:
+    res: {
       data: {
         "indicator": "${indicator}",
         "years": "${stat_res.dimension.Aasta.category.index}",
         "months": "${stat_res.dimension.Kuu.category.label}",
         "value": "${stat_res.value}"
       }
-  result: format_stats_res
-  next: assign_result
+    }
+  next: format_price_index_data
 
-assign_result:
-  assign:
-    res: ${format_stats_res.response.body}
-  next: format_messages
+format_price_index_data:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/statistics-estonia/get_consumer_price_index"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+  result: formatMessage
+  next: return_result
 
 format_messages:
   call: http.post
