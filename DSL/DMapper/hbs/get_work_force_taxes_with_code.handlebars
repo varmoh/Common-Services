@@ -3,7 +3,7 @@
     {{#each hits}}
             {
               "result": "{{ _source.labor_taxes_and_payments }}",
-              "name": "{{ _source.name }}"
+              "text": "{{ _source.name }} tööjõumaksud ja maksed olid {{ formatToReadableNumber _source.labor_taxes_and_payments }} eurot"
             }{{#unless @last}},{{/unless}}
     {{/each}}
     ]

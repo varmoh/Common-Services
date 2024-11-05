@@ -2,7 +2,7 @@
 {{#each messages}}
   {
     "text": "{{{ignoreBlacklist text ../ignoreTexts}}}"{{#if (isFirstIndex @index)}},
-    "buttons": [{{#each ../companies}}{"title": "{{{name}}}","payload": "{{{../../prefix}}}{{{registry_code}}})"}{{#unless @last}},{{/unless}}{{/each}}]
+    "buttons": [{{#each (filterCompanies ../companies)}}{"title": "{{{name}}}","payload": "{{{../../prefix}}}{{{registry_code}}})"}{{#unless @last}},{{/unless}}{{/each}}]
     {{/if}}
   }
 {{#unless @last}},{{/unless}}

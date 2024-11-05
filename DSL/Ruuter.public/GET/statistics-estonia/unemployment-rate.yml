@@ -85,7 +85,7 @@ assign_error:
 assign_recent_rate:
   assign:
     res: {
-      "result": "Viimane töötuse määr ${stat_res.dimension.Vaatlusperiood.category.label[period[0]]}. aastal on ${stat_res.value[0]}"
+      "result": "Viimane töötuse määr ${stat_res.dimension.Vaatlusperiood.category.label[period[0]]}. aastal on ${stat_res.value[0]}%"
     }
   next: format_messages
 
