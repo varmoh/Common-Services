@@ -49,7 +49,7 @@ formatNotFound:
 formatResult:
   assign:
     res: {
-      "result": "${memberData.fullName} on aastal ${year} osalenud istungitel ${memberData.participated} korda ja puudunud ${memberData.absent} korda."
+      "result": "${memberData.fullName} on ${year}. aastal osalenud ${memberData.participated} istungil ja puudunud ${memberData.absent} korda."
     }
   next: formatMessages
 
