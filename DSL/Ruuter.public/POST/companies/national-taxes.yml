@@ -31,6 +31,7 @@ extract_body:
     chatId: ${incoming.body.chatId}
     authorId: ${incoming.body.authorId}
     county: ${incoming.body.input[0]}
+    year: ${new Date().getFullYear().toString()}
 
 checkForParams:
   switch:
@@ -58,6 +59,7 @@ mapCodeData:
       type: "json"
     body:
       hits: ${res.response.body.hits.hits}
+      year: ${year}
   result: codeMappedData
   next: checkMappedData
 
