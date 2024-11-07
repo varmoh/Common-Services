@@ -29,7 +29,7 @@ assignVariables:
 assignResponse:
   assign:
     res: {
-      "result": "Antud tunnil on elektri börsihind ${price} €/mWh"
+      "result": "Käesoleva tunni elektri börsihind on ${price} €/mWh"
       }
   next: formatMessages
 

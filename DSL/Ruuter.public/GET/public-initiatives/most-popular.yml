@@ -41,7 +41,7 @@ assignVariables:
 formatResponse:
   assign:
     res: {
-      "result": "Viis populaarsemat aktiivset algatust:\\n
+      "result": "Viis populaarsemat aktiivset rahvaalgatust:\\n
         1. ${first.title}\\n
           Kogutud allkirjad: ${first.signatureCount}/ min. allkirjad: ${first.signatureThreshold}\\n\\n
         2. ${second.title}\\n

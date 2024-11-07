@@ -69,9 +69,7 @@ formatMessageDate:
 
 formatValue:
   assign:
-    res: {
-     "result": "${formattedDate}"
-    }
+    res: ${formattedDate.response.body}
   next: formatMessages
 
 formatMessages:

@@ -3,7 +3,7 @@
     {{#each hits}}
             {
               "result": "{{ _source.turnover }}",
-              "text": "{{ _source.name }} käive oli {{ formatToReadableNumber _source.turnover }} eurot "
+              "text": "{{ _source.name }} käive {{../year}}. aasta eelmisel kvartalil {{ formatToReadableNumber _source.turnover }} eurot"
             }{{#unless @last}},{{/unless}}
     {{/each}}
     ]

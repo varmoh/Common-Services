@@ -3,7 +3,7 @@
     {{#each hits}}
             {
               "result": "{{ _source.labor_taxes_and_payments }}",
-              "text": "{{ _source.name }} tööjõumaksud ja maksed olid {{ formatToReadableNumber _source.labor_taxes_and_payments }} eurot"
+              "text": "{{ _source.name }} on {{../year}}. aasta eelmisel kvartalil tasunud tööjõumakse kokku summas {{ formatToReadableNumber _source.labor_taxes_and_payments }} eurot."
             }{{#unless @last}},{{/unless}}
     {{/each}}
     ]

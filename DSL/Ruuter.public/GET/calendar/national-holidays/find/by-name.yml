@@ -55,20 +55,32 @@ checkHoliday:
   switch:
     - condition: ${filteredHolidays.length < 1}
       next: holidayNotFound
-  next: formatValue
+  next: formatResponse
 
 holidayNotFound:
   assign:
     res: {
       "result": "Ei leia sellist riigipüha"
     }
-  next: formatMessages 
+  next: formatMessages
 
-formatValue:
+formatResponse:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holiday_by_name"
+    headers:
+      type: json
+    body:
+      data: {
+        "name": "${filteredHolidays[0].name.charAt(0).toUpperCase() + filteredHolidays[0].name.slice(1)}",
+        "date": "${filteredHolidays[0].date}"
+      }
+  result: formatResponse
+  next: assignValue
+
+assignValue:
   assign:
-    res: {
-      "result": "${filteredHolidays[0].name.charAt(0).toUpperCase() + filteredHolidays[0].name.slice(1)} on ${filteredHolidays[0].date}"
-    }
+    res: ${formatResponse.response.body}
   next: formatMessages
 
 formatMessages:

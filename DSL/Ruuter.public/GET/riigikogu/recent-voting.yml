@@ -46,7 +46,7 @@ formatResult:
     absent: ${voting.absent}
     present: ${voting.present}
     res: {
-      "result": "Viimane hääletus:\\n\\n${votingTitle}\\n\\nKohal: ${present}\\nPuudus: ${absent}\\nPoolt: ${inFavor}\\nVastu: ${against}\\nErapooletu: ${neutral}\\nEi hääletanud: ${abstained}"
+      "result": "Viimane riigikogu hääletus oli:\\n\\n${votingTitle}\\n\\nRiigikogu liikmete osalus oli järgmine:\\nKohal: ${present}\\nPuudus: ${absent}\\nPoolt: ${inFavor}\\nVastu: ${against}\\nErapooletu: ${neutral}\\nEi hääletanud: ${abstained}"
     }
 
   next: formatMessages
