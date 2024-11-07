@@ -54,12 +54,23 @@ validateHoliday:
   assign:
     previousHoliday: ${holiday_data.response.body.holidays
         .filter(holiday => holiday.date < today).sort((a, b) => new Date(b.date) - new Date(a.date))[0]}
+  next: formatMessageDate
+
+formatMessageDate:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holiday_previous"
+    headers:
+      type: json
+    body:
+      data: ${previousHoliday}
+  result: formattedDate
   next: formatValue
 
 formatValue:
   assign:
     res: {
-     "result": "Viimane riigipüha oli ${previousHoliday.name} - ${previousHoliday.date}"
+     "result": "${formattedDate}"
     }
   next: formatMessages
 
