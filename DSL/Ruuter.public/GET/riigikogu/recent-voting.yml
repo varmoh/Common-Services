@@ -38,7 +38,7 @@ votingDataFormatting:
 formatResult:
   assign:
     voting: ${votingDetails[0]}
-    votingTitle: ${voting.relatedDraft.title}
+    votingTitle: ${voting.relatedDraft.title.replace('\"','')}
     inFavor: ${voting.inFavor}
     against: ${voting.against}
     neutral: ${voting.neutral}
