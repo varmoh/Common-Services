@@ -77,7 +77,7 @@ checkHolidays:
     - condition: ${holidays.length < 1}
       next: holidayNotFound
     - condition: ${holidays.length === 1}
-      next: assignSingleValue
+      next: formatSingleResponse
     - condition: ${holidays.length > 1}
       next: formatValue
 
@@ -88,11 +88,23 @@ holidayNotFound:
     }
   next: formatMessages
 
+formatSingleResponse:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holiday_by_single_month"
+    headers:
+      type: json
+    body:
+      data: {
+        "name": "${holidays[0].name}",
+        "date": "${holidays[0].date}"
+      }
+  result: formatSingleResponse
+  next: assignSingleValue
+
 assignSingleValue:
   assign:
-    res: {
-      "result": "Antud kuus on ${holidays[0].name} - ${holidays[0].date}"
-    }
+    res: ${formatSingleResponse.response.body}
   next: formatMessages
 
 formatValue:
@@ -102,7 +114,10 @@ formatValue:
     headers:
       type: json
     body:
-      data: ${holidays}
+      data: {
+        "date": "${holidays[0].date}",
+        "holidays": "${holidays}"
+      }
   result: holiday
   next: assignResponse
 

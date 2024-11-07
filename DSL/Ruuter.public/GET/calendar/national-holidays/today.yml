@@ -63,7 +63,7 @@ checkHoliday:
 holidayNotFound:
   assign:
     res: {
-      "result": "Täna ei ole riigpüha."
+      "result": "Täna ei ole riigipüha."
     }
   next: formatMessages
 

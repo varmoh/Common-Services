@@ -15,7 +15,6 @@ prepare:
     today: ${new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0]}
   next: makeApiCall
 
-
 makeApiCall:
   call: reflect.mock
   args:
@@ -54,13 +53,22 @@ validateHoliday:
   assign:
     upcomingHoliday: ${holiday_data.response.body.holidays
         .filter(holiday => holiday.date >= today).sort((a, b) => new Date(a.date) - new Date(b.date))[0]}
-  next: formatValue
+  next: formatResponse
 
-formatValue:
+formatResponse:
+  call: http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holiday_next"
+    headers:
+      type: json
+    body:
+      data: ${upcomingHoliday}
+  result: formatMessage
+  next: assignResponse
+
+assignResponse:
   assign:
-    res: {
-       "result": "Tulev riigipüha on ${upcomingHoliday.name} - ${upcomingHoliday.date}"
-    }
+    res: ${formatMessage.response.body}
   next: formatMessages
 
 formatMessages:
