@@ -38,7 +38,7 @@ makeAPIRequest:
 assingResult:
   assign:
     res: {
-      "result": "Arvestuslik elatusmiinimum on ${subsistence.response.body.value[0]}€/ kuus"
+      "result": "Arvestuslik elatusmiinimum ${lastYear}. aastal on ${subsistence.response.body.value[0]} €/kuus"
     }
   next: formatMessages
 
