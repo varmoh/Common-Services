@@ -41,7 +41,7 @@ assignVariables:
 assignResponse:
   assign:
     res: {
-      "result": "Täna on madalaim elektri börsihind ${minPrice} €/mWh, kell ${timeVar}"
+      "result": "Täna on kõige madala elektri börsihind kell ${timeVar}, hinnaga ${minPrice} €/mWh"
     }
   next: formatMessages
 
