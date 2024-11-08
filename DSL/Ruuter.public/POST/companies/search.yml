@@ -32,7 +32,7 @@ assign_values:
     name: ${input[1]}
     chatId: ${incoming.body.chatId}
     authorId: ${incoming.body.authorId}
-    buttonPrefix: "#common_service, /POST/services/companies/${serviceName}, ("
+    buttonPrefix: "#common_service, /POST/companies/${serviceName}, ("
 
 getCompaniesWithName:
   call: http.post
