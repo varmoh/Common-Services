@@ -40,7 +40,7 @@ checkRegionData:
 assign_region_error:
   assign:
     res: {
-      "result": "${region.charAt(0).toUpperCase() + region.slice(1)} kohta temperatuuriandmeid ei leitud"
+      "result": "Andmeid ei leitud"
     }
   next: formatMessages
 
@@ -90,15 +90,16 @@ getWeather:
 formatResult:
   assign:
     weather: ${weather.response.body.entries.entry[0]}
-    temperature: ${weather.tains}
-    windCold: ${weather.tuulekylm}
+    temperature: ${weather.tains.replace(',', '.')}
+    feelsLike: ${weather.tuulekylm.replace(',', '.')}
+    windSpeed: ${weather.ws10ma.replace(',', '.')}
   next: assignResponse
 
 # Assigns the weather data response.
 assignResponse:
   assign:
     res: {
-      "result": "${region.charAt(0).toUpperCase() + region.slice(1)}:\\nTemperatuur ${temperature.replace(',', '.')}°C\\nTuulekülm ${windCold.replace(',', '.')}°C"
+      "result": "Hetkel on õhutemperatuur ${temperature}°C (tajutav ${feelsLike}°C), puhub tuul ${windSpeed}m/s."
     }
   next: formatMessages
 
