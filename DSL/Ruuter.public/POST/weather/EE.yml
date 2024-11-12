@@ -40,7 +40,7 @@ checkRegionData:
 assign_region_error:
   assign:
     res: {
-      "result": "${region} kohta temperatuuriandmeid ei leitud"
+      "result": "${region.charAt(0).toUpperCase() + region.slice(1)} kohta temperatuuriandmeid ei leitud"
     }
   next: formatMessages
 
@@ -98,7 +98,7 @@ formatResult:
 assignResponse:
   assign:
     res: {
-      "result": "Sisse ${region} on temperatuur ${temperature}°C, tuulekülm on ${windCold}°C"
+      "result": "${region.charAt(0).toUpperCase() + region.slice(1)}:\\nTemperatuur ${temperature.replace(',', '.')}°C\\nTuulekülm ${windCold.replace(',', '.')}°C"
     }
   next: formatMessages
 
