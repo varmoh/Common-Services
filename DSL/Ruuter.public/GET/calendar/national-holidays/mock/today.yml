@@ -2,15 +2,27 @@ declaration:
   call: declare
   version: 0.1
   name: "MOCK - Check Today's Holiday"
-  description: |
-    This mock service checks if today is a national holiday based on a mocked API response.
+  description: "MOCK - This service checks if today is a national holiday"
   method: get
-  params: []
+  accepts: json
   returns: json
+  allowlist:
+    body:
+    - field: chatId
+      type: string
+      description: "The chat ID for the message"
+    - field: authorId
+      type: string
+      description: "The author ID for the message"
+    - field: today
+      type: string
+      description: "The current date in ISO format - ex. 'yyyy-mm-dd'"
 
 prepare:
   assign:
-    today: "2024-01-01" # ${new Date().toISOString().split("T")[0]}
+    chatId: "1010" # ${incoming.params.chatId}
+    authorId: "abc123" # ${incoming.params.authorId}
+    today: "2024-03-29" # ${new Date().toISOString().split("T")[0]}
   next: makeApiCall
 
 makeApiCall:
@@ -58,22 +70,50 @@ checkHoliday:
       next: holidayNotFound
   next: formatValue
 
-formatValue:
-  assign:
-    holiday:
-      result: "Täna on ${holiday.name}"
-  next: returnValue
-
-returnValue:
-  return: ${holiday}
-  next: end
-# -------------------------------------------------- 
 holidayNotFound:
   assign:
-    noHoliday:
-      result: "Täna ei ole riigpüha."
-  next: returnNoValue
+    res: {
+      "result": "Täna ei ole riigpüha."
+    }
+  next: formatMessages
 
-returnNoValue:
-  return: ${noHoliday}
+formatValue:
+  assign:
+    res: {
+      "result": "Täna on ${holiday.name}"
+    }
+  next: formatMessages
+
+formatMessages:
+  call: reflect.mock # http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+    response:
+      body:
+        - chatId: "1010"
+          content: "Täna on suur reede"
+          buttons: []
+          authorTimestamp: "2024-11-05T12:00:00Z"
+          authorId: "abc123"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-05T12:00:00Z"
+  result: formatMessage
+  next: returnResult
+
+returnResult:
+  return: ${formatMessage.response.body}
   next: end

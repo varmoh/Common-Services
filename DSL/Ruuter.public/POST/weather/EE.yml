@@ -3,8 +3,20 @@ declaration:
   version: "0.1"
   description: "Gets weather information for locations in EE - estonia"
   method: post
+  accepts: json
   returns: json
   namespace: common-services
+  allowlist:
+    body:
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
+      - field: input
+        type: array
+        description: "The input is city name"
 
 # Assigns key variables for processing the request, including API endpoints.
 assignVariables:

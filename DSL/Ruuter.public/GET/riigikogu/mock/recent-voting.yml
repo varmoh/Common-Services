@@ -1,42 +1,103 @@
 declaration:
   call: declare
   version: 0.1
-  name: Mock Recent Voting Service
-  description: A mock service that provides most recent voting results
-  method: get
+  name: "MOCK - Recent voting Service"
+  description: "MOCK - A service that provides most recent voting result"
+  method: post
+  accepts: json
   returns: json
   namespace: common-services
+  allowlist:
+    body:
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
+      - field: offSet
+        type: string
+        description: "The offset for the date - 90days"
+      - field: end
+        type: string  
+        description: "The end date for the voting results"
+      - field: start
+        type: string
+        description: "The start date for the voting results"
 
-prepareRequest:
+prepareVariables:
   assign:
-    lang: "ET"
-  next: mockAPIRequest
+    chatId: "1010" # ${incoming.params.chatId}
+    authorId: "abc123" # ${incoming.params.authorId}
+    offSet: 90 # get time period with enough data (90 days)
+    end: ${new Date().toISOString().split('T')[0]}
+    start: ${new Date(new Date(end).setDate(new Date(end).getDate() - offSet)).toISOString().split('T')[0]} 
+  next: makeAPIRequest
 
-mockAPIRequest:
-  assign:
-    votingData:
-      response:
-        body:
-          description: "Eelnõu X"
-          inFavor: 50
-          against: 30
-          neutral: 10
-          abstained: 5
-  next: formatResponse
+makeAPIRequest:
+  call: reflect.mock # http.get
+  args:
+    url: "https://api.riigikogu.ee/api/votings?endDate=${end}&lang=ET&startDate=${start}"
+    headers:
+      Accept: "application/json"
+  result: votingData
+  next: votingDataFormatting
 
-formatResponse:
+# Extracts the 5 most recent public votings related to drafts, sorted by date
+votingDataFormatting:
   assign:
-    votingTitle: ${votingData.response.body.description}
-    inFavor: ${votingData.response.body.inFavor}
-    against: ${votingData.response.body.against}
-    neutral: ${votingData.response.body.neutral}
-    abstained: ${votingData.response.body.abstained}
+    votingDetails: ${votingData.response.body
+      .flatMap(session => session.votings)
+      .filter(voting => voting.type.value === "Avalik" && voting.relatedDraft)
+      .sort((voting1, voting2) => new Date(voting2.startDateTime) - new Date(voting1.startDateTime))
+      .slice(0, 1)}
+  next: formatResult
+
+formatResult:
+  assign:
+    voting: ${votingDetails[0]}
+    votingTitle: ${voting.relatedDraft.title}
+    inFavor: ${voting.inFavor}
+    against: ${voting.against}
+    neutral: ${voting.neutral}
+    abstained: ${voting.abstained}
+    absent: ${voting.absent}
+    present: ${voting.present}
+    res: {
+      "result": "Viimane hääletus:\\n\\n${votingTitle}\\n\\nKohal: ${present}\\nPuudus: ${absent}\\nPoolt: ${inFavor}\\nVastu: ${against}\\nErapooletu: ${neutral}\\nEi hääletanud: ${abstained}"
+    }
+
+  next: formatMessages
+
+formatMessages:
+  call: reflect.mock # http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+    response:
+      body:
+        - chatId: "1010"
+          content: "Viimane hääletus:\\n\\nMeditsiiniseadme seaduse muutmise ja sellega seonduvalt teiste seaduste muutmise seadus (pädevuse andmine Ravimiametile)\\n\\nKohal: 86\\nPuudus: 15\\nPoolt: 65\\nVastu: 0\\nErapooletu: 1\\nEi hääletanud: 35"
+          buttons: []
+          authorTimestamp: "2024-11-05T12:00:00Z"
+          authorId: "abc123"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-05T12:00:00Z"
+  result: formatMessage
   next: returnResult
 
 returnResult:
-  return: ${"'" + votingTitle+ "', Poolt on " + inFavor + ", Vastu on " + against + ", Neutraalsed " + neutral + ", Ei hääletanud " + abstained}
-  next: end
-
-returnError:
-  return: "Error: failed to get recent votings data."
-  next: end
+  return: ${formatMessage.response.body}

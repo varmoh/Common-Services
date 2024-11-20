@@ -2,16 +2,31 @@ declaration:
   call: declare
   version: 0.1
   name: "MOCK - Find Holidays Until End of Year"
-  description: |
-    This mock service returns all holidays from today's date until the end of the year, based on a mock API response of 2024 public holidays.
+  description: "MOCK - Returns all holidays from today's date until the end of the year"
   method: get
-  params: []
+  accepts: json
   returns: json
+  allowlist:
+    body:
+    - field: chatId
+      type: string
+      description: "The chat ID for the message"
+    - field: authorId
+      type: string
+      description: "The author ID for the message"
+    - field: today
+      type: string
+      description: "The current date in ISO format - ex. 'yyyy-mm-dd'"
+    - field: yearEnd
+      type: string
+      description: "The end of the year in ISO format - ex. 'yyyy-mm-dd'"
 
 prepare:
   assign:
-    today: "2024-10-10" #${new Date().toISOString().split("T")[0]}
-    yearEnd: ${today.split("-")[0] + "-12-31"}
+    chatId: "1010" # ${incoming.params.chatId}
+    authorId: "abc123" # ${incoming.params.authorId}
+    today: "2024-09-24" # ${new Date().toISOString().split("T")[0]}
+    yearEnd: "2024-12-31" # ${today.split("-")[0] + "-12-31"}
   next: makeApiCall
 
 makeApiCall:
@@ -45,25 +60,66 @@ makeApiCall:
           name: "esimene jõulupüha"
         - date: "2024-12-26"
           name: "teine jõulupüha"
-  result: holiday_data
+  result: holidayData
   next: validateHolidaysEOY
 
 validateHolidaysEOY:
   assign:
-    holidaysEOY: ${holiday_data.response.body.holidays
+    holidaysEOY: ${holidayData.response.body.holidays
         .filter(holiday => holiday.date >= today && holiday.date <= yearEnd)
         .sort((a, b) => new Date(a.date) - new Date(b.date))}
   next: formatResult
 
 formatResult:
-  call: reflect.mock
+  call: reflect.mock # http.post
   args:
-    url: "[#DMAPPER]/hbs/calendar/national-holidays/get_national_holiday_eoy"
-    response:
-      result: "Kõik riigipühad alates tänsest kuni aasta lõpuni on: \n*2024-12-24\n jõululaupäev\n\n *2024-12-25\n esimene jõulupüha\n\n *2024-12-26\n teine jõulupüha\n\n"
+    url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holiday_eoy"
+    headers:
+      type: json
+    body:
+      data: ${holidaysEOY}
+  response: {
+        "result": "Kõik riigipühad alates tänsest kuni aasta lõpuni on: \n*2024-12-24\n jõululaupäev\n\n *2024-12-25\n esimene jõulupüha\n\n *2024-12-26\n teine jõulupüha\n\n"
+      }
   result: formattedHolidays
-  next: returnValue
+  next: assignResponse
 
-returnValue:
-  return: ${formattedHolidays.response.body}
+assignResponse:
+  assign:
+    res: ${formattedHolidays.response.body}
+  next: formatMessages
+
+# format throgh DM bot response to messages
+formatMessages:
+  call: reflect.mock # http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+    response:
+      body:
+        - chatId: "1010"
+          content: "Kõik riigipühad alates tänsest kuni aasta lõpuni on: \n*2024-12-24\n jõululaupäev\n\n *2024-12-25\n esimene jõulupüha\n\n *2024-12-26\n teine jõulupüha\n\n"
+          buttons: []
+          authorTimestamp: "2024-11-05T12:00:00Z"
+          authorId: "abc123"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-05T12:00:00Z"
+  result: formatMessage
+  next: returnResult
+
+returnResult:
+  return: ${formatMessage.response.body}
   next: end

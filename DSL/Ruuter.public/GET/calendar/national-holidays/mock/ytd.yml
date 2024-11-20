@@ -2,16 +2,31 @@ declaration:
   call: declare
   version: 0.1
   name: "MOCK - Filter Holidays Year-to-Date"
-  description: |
-    This mock service filters holidays for the current year-to-date from a mocked API response.
+  description: "MOCK - This service filters holidays for the current year-to-date"
   method: get
-  params: []
+  accepts: json
   returns: json
+  allowlist:
+    body:
+    - field: chatId
+      type: string
+      description: "The chat ID for the message"
+    - field: authorId
+      type: string
+      description: "The author ID for the message"
+    - field: today
+      type: string
+      description: "The current date in ISO format - ex. 'yyyy-mm-dd'"
+    - field: yearStart
+      type: string
+      description: "The start of the year in ISO format - ex. 'yyyy-mm-dd'"
 
 prepare:
   assign:
-    today: "2024-10-10" #${new Date().toISOString().split("T")[0]}
-    yearStart: ${today.split("-")[0] + "-01-01"}
+    chatId: "1010" # ${incoming.params.chatId}
+    authorId: "abc123" #${incoming.params.authorId}
+    today: "2024-09-24" # ${new Date().toISOString().split("T")[0]}
+    yearStart: "2024-01-01" # ${today.split("-")[0] + "-01-01"}
   next: makeApiCall
 
 makeApiCall:
@@ -56,16 +71,54 @@ validateHolidaysYTD:
   next: formatResult
 
 formatResult:
-  call: reflect.mock
+  call: reflect.mock # http.post
   args:
-    url: "[#DMAPPER]/hbs/calendar/national-holidays/get_national_holiday_ytd"
+    url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holiday_ytd"
+    headers:
+      type: json
     body:
-      holidaysYTD: ${holidaysYTD}
-    response:
-      result: "Kõik pühad aasta algusest kuni tänaseni:\n* 2024-01-01\nuusaasta\n\n* 2024-02-24\niseseisvuspäev, Eesti Vabariigi aastapäev\n\n* 2024-03-29\nsuur reede\n\n* 2024-03-31\nülestõusmispühade 1. püha\n\n* 2024-05-01\nkevadpüha\n\n* 2024-05-19\nnelipühade 1. püha\n\n* 2024-06-23\nvõidupüha\n\n* 2024-06-24\njaanipäev\n\n* 2024-08-20\ntaasiseseisvumispäev\n"
+      data: ${holidaysYTD}
+    response: {
+         "result": "Kõik pühad aasta algusest kuni tänaseni:\n* 2024-01-01\nuusaasta\n\n* 2024-02-24\niseseisvuspäev, Eesti Vabariigi aastapäev\n\n* 2024-03-29\nsuur reede\n\n* 2024-03-31\nülestõusmispühade 1. püha\n\n* 2024-05-01\nkevadpüha\n\n* 2024-05-19\nnelipühade 1. püha\n\n* 2024-06-23\nvõidupüha\n\n* 2024-06-24\njaanipäev\n\n* 2024-08-20\ntaasiseseisvumispäev\n"
+    }
   result: formattedHolidays
-  next: returnValue
+  next: assignResponse
 
-returnValue:
-  return: ${formattedHolidays.response.body}
+assignResponse:
+  assign:
+    res: ${formattedHolidays.response.body}
+  next: formatMessages
+
+formatMessages:
+  call: reflect.mock # http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+    response:
+      body:
+        - chatId: "1010"
+          content: "Kõik pühad aasta algusest kuni tänaseni:\n* 2024-01-01\nuusaasta\n\n* 2024-02-24\niseseisvuspäev, Eesti Vabariigi aastapäev\n\n* 2024-03-29\nsuur reede\n\n* 2024-03-31\nülestõusmispühade 1. püha\n\n* 2024-05-01\nkevadpüha\n\n* 2024-05-19\nnelipühade 1. püha\n\n* 2024-06-23\nvõidupüha\n\n* 2024-06-24\njaanipäev\n\n* 2024-08-20\ntaasiseseisvumispäev\n"
+          buttons: []
+          authorTimestamp: "2024-11-05T12:00:00Z"
+          authorId: "abc123"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-05T12:00:00Z"
+  result: formatMessage
+  next: returnResult
+
+returnResult:
+  return: ${formatMessage.response.body}
   next: end

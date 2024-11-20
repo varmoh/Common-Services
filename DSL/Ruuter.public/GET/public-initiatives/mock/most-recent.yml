@@ -1,13 +1,43 @@
 declaration:
   call: declare
   version: 0.1
-  description: get 5 most-recent active initiatives
-  method: get
+  name: "MOCK - 5 most recent active initiatives service"
+  description: "MOCK - Provides information for 5 most recent active initiatives"
+  method: post
+  accepts: json
   returns: json
   namespace: common-services
+  allowlist:
+    body:
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
+      - field: order
+        type: string
+        description: "The order for the initiatives"
+      - field: distinct
+        type: string
+        description: "The distinct for the initiatives"
+      - field: limit
+        type: string
+        description: "Amount of initiatives"
+      - field: rahvaalgatus
+        type: string
+        description: "The rahvaalgatus API"
+      - field: initiativeEventHeader
+        type: string
+        description: "Official initiative event header"
+      - field: initiativeHeader
+        type: string
+        description: "Official initiative header"
 
 prepareVariables:
   assign:
+    chatId: "1010" # ${incoming.params.chatId}
+    authorId: "abc123" # ${incoming.params.authorId}
     order: "-occurredAt"
     distinct: "initiativeId"
     limit: "5"
@@ -23,7 +53,6 @@ getEvents:
     headers:
       Accept: "${initiativeEventHeader}"
   result: events
-  error: returnError
   next: extractIds
 
 extractIds:
@@ -38,7 +67,6 @@ getFirstEvent:
     headers:
       Accept: "${initiativeHeader}"
   result: firstInitiative
-  error: returnError
   next: getSecondEvent
 
 getSecondEvent:
@@ -48,7 +76,6 @@ getSecondEvent:
     headers:
       Accept: "${initiativeHeader}"
   result: secondInitiative
-  error: returnError
   next: getThirdEvent
 
 getThirdEvent:
@@ -58,7 +85,6 @@ getThirdEvent:
     headers:
       Accept: "${initiativeHeader}"
   result: thirdInitiative
-  error: returnError
   next: getFourthEvent
 
 getFourthEvent:
@@ -68,7 +94,6 @@ getFourthEvent:
     headers:
       Accept: "${initiativeHeader}"
   result: fourthInitiative
-  error: returnError
   next: getFifthEvent
 
 getFifthEvent:
@@ -78,22 +103,74 @@ getFifthEvent:
     headers:
       Accept: "${initiativeHeader}"
   result: fifthInitiative
-  error: returnError
-  next: assignVariables2
+  next: assignVariables
 
-assignVariables2:
+assignVariables:
   assign:
     first: ${firstInitiative.response.body}
     second: ${secondInitiative.response.body}
     third: ${thirdInitiative.response.body}
     fourth: ${fourthInitiative.response.body}
     fifth: ${fifthInitiative.response.body}
+  next: formatResponse
+
+formatResponse:
+  assign:
+    res: {
+      "result" : "Viis viimast aktiivset algatust:\\n
+        1. ${first.title}\\n
+          Kogutud allkirjad: ${first.signatureCount}/ min. allkirjad: ${first.signatureThreshold}\\n\\n
+        2. ${second.title}\\n
+          Kogutud allkirjad: ${second.signatureCount}/ min. allkirjad: ${second.signatureThreshold}\\n\\n
+        3. ${third.title}\\n
+          Kogutud allkirjad: ${third.signatureCount}/ min. allkirjad: ${third.signatureThreshold}\\n\\n
+        4. ${fourth.title}\\n
+          Kogutud allkirjad: ${fourth.signatureCount}/ min. allkirjad: ${fourth.signatureThreshold}\\n\\n
+        5. ${fifth.title}\\n
+          Kogutud allkirjad: ${fifth.signatureCount}/ min. allkirjad: ${fifth.signatureThreshold}"
+    }
+  next: formatMessages
+
+# format throgh DM bot response to messages
+formatMessages:
+  call: reflect.mock # http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+    response:
+      body:
+        - chatId: "1010"
+          content: "Viis viimast aktiivset algatust:\\n
+            1. Säilitame Tõrva Kõrtsihoone ajaloolise välimuse!\\n
+              Kogutud allkirjad: 77 / min. allkirjad: 49\\n\\n
+            2. Nõuame Lasnamäe jaoks hädavajaliku bussiliini nr 65 säilitamist!\\n
+              Kogutud allkirjad: 3764 / min. allkirjad: 3518\\n\\n
+            3. Palume lõpetada detailplaneering raadiosidemasti paigaldamiseks, et säilitada Urmi küla ainulaadne looduslik ja kultuuriline keskkond.\\n
+              Kogutud allkirjad: 135 / min. allkirjad: 116\\n\\n
+            4. Kuldala pargi säilitamine\\n
+              Kogutud allkirjad: 614 / min. allkirjad: 159\\n\\n
+            5. Tuld talveajale\\n
+              Kogutud allkirjad: 229 / min. allkirjad: 1000"
+          buttons: []
+          authorTimestamp: "2024-11-05T12:00:00Z"
+          authorId: "abc123"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-05T12:00:00Z"
+  result: formatMessage
   next: returnResult
 
 returnResult:
-  return: ${[first, second, third, fourth, fifth]}
-  next: end
-
-returnError:
-  return: "Error: failed to get initiative details."
-  next: end
+  return: ${formatMessage.response.body}

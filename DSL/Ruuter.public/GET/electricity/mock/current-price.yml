@@ -1,8 +1,8 @@
 declaration:
   call: declare
   version: 0.1
-  name: "Current electricity Price Service"
-  description: "This service fetches electricity prices for the current hour"
+  name: "MOCK - Current electricity Price Service"
+  description: "MOCK - This service fetches electricity prices for the current hour"
   method: post
   accepts: json
   returns: json
@@ -38,12 +38,12 @@ assignVariables:
 assignResponse:
   assign:
     res: {
-      "result": "Käesoleva tunni elektri börsihind on ${price} €/mWh"
+      "result": "Antud tunnil on elektri börsihind ${price} €/mWh"
       }
   next: formatMessages
 
 formatMessages:
-  call: http.post
+  call: reflect.mock # http.post
   args:
     url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
     headers:
@@ -59,6 +59,16 @@ formatMessages:
           "authorTimestamp": "${new Date().toISOString()}",
           "created": "${new Date().toISOString()}",
         }
+    response:
+      body:
+        - chatId: "1010"
+          content: "Antud tunnil on elektri börsihind 89.23 €/mWh"
+          buttons: []
+          authorTimestamp: "2024-11-05T12:00:00Z"
+          authorId: "abc123"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-05T12:00:00Z"
   result: formatMessage
   next: returnResult
 

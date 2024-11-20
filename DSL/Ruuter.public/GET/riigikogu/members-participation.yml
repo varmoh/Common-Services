@@ -3,9 +3,34 @@ declaration:
   version: 0.1
   name: Member Participation Statistics Service
   description: A service that provides participation statistics for Riigikogu members.
-  method: get
+  method: post
+  accepts: json
   returns: json
   namespace: common-services
+  allowlist:
+    body:
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
+      - field: endDate
+        type: string
+        description: "The end date for members praticipation"
+      - field: startDate
+        type: string
+        description: "The start date for members participation"
+      - field: year
+        type: string
+        description: "The year for members participation"
+      - field: lang
+        type: string
+        description: "The language for members participation"
+      - field: memberName
+        type: string
+        description: "The member name for members participation"
+
 
 prepare:
   assign:

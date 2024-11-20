@@ -1,11 +1,29 @@
 declaration:
   call: declare
   version: 0.1
-  name: " most recent voting results service"
-  description: "Provides information for 5 most-recent voting results"
-  method: get
+  name: "Riigikogu 5 most recent voting results service"
+  description: "Provides information for 5 most-recent voting results in Riigikogu"
+  method: post
+  accepts: json
   returns: json
-  namespace:  common-services
+  namespace: common-services
+  allowlist:
+    body:
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
+      - field: offSet
+        type: string
+        description: "The offset for the date - 90days"
+      - field: end
+        type: string
+        description: "The end date for the voting results"
+      - field: start 
+        type: string
+        description: "The start date for the voting results"
 
 prepareVariables:
   assign:

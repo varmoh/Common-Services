@@ -2,11 +2,24 @@ declaration:
   call: declare
   version: 0.1
   name: "Filter Holidays Year-to-Date"
-  description: |
-    This service filters  holidays for the current year-to-date from a mocked API response.
+  description: "This service filters holidays for the current year-to-date"
   method: get
-  params: []
+  accepts: json
   returns: json
+  allowlist:
+    body:
+    - field: chatId
+      type: string
+      description: "The chat ID for the message"
+    - field: authorId
+      type: string
+      description: "The author ID for the message"
+    - field: today
+      type: string
+      description: "The current date in ISO format - ex. 'yyyy-mm-dd'"
+    - field: yearStart
+      type: string
+      description: "The start of the year in ISO format - ex. 'yyyy-mm-dd'"
 
 prepare:
   assign:

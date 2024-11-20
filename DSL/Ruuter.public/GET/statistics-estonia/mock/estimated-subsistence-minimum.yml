@@ -4,8 +4,17 @@ declaration:
   name: "MOCK - Estimated Subsistence Minimum"
   description: "Provides mock information about Estimated Subsistence Minimum"
   method: post
+  accepts: json
   returns: json
   namespace: common-services
+  allowlist:
+    body:
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
 
 prepareVariables:
   assign:

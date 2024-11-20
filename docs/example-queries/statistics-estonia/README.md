@@ -1,112 +1,67 @@
-# Statistics-Estonia service
+# Statistics-Estonia API Documentation GET
 
-***This service provides Consumer Price Index (CPI) change, Estimated Subsistence Minimum, and Unemployment Rate***
 
-# API endpoints (GET)
+### Trigger the service via Bürokratt Chatbot
 ```
-/statistics-estonia/estimated-subsistence-minimum
-/statistics-estonia/unemployment-rate
-/statistics-estonia/consumer-price-index
-```
-##  * estimated-subsistence-minimum:
-### Example passed parameters
-```
-  "chatId": "12345",
-  "authorId": "user123"
-```
-### Example response
-```
-[
-  {
-    "chatId": "12345",
-    "content": "Arvestuslik elatusmiinimum on 338.23€/ kuus",
-    "buttons": [
-      {
-        "title": "More Info",
-        "payload": "info"
-      },
-      {
-        "title": "Help",
-        "payload": "help"
-      }
-    ],
-    "authorTimestamp": "2024-11-04T00:00:00.000Z",
-    "authorId": "user123",
-    "authorFirstName": "",
-    "authorLastName": "",
-    "created": "2024-11-04T00:00:00.000Z"
-  }
-]
+Consumer Price Index:
+    Mis on tarbija indeks?
+    Mis on tarbija indeks 2021?
+    Mis on tarbija indeks 2021 jaanuaris?
 
+Estimated Subsistence Minimum:
+    Arvestuslik elatusmiinimum
+
+Unemployment Rate:
+    Mis on töötuse määr Eestis?
+    Mis on töötuse määr aastal 2021 Eestis?
 ```
 
-## * unemployment-rate:
-### Example passed parameters
+
+### Trigger the service as a stand-alone
+NB! Required DSL parameters for all services
+```
+chatId: "${incoming.params.chatId}"
+authorId: "${incoming.params.authorId}"
+```
+
+Endpoints
+```
+statistics-estonia/consumer-price-index    # accepts params (e.g incoming.params.input = "previous_month,veebruar,2023")
+statistics-estonia/estimated-subsistence-minimum    # no params
+statistics-estonia/unemployment-rate       #  # accepts params (e.g incoming.params.input = "2022")
+```
+
+
+## * consumer-price-index 
+```
+curl localhost:8080/statistics-estonia/consumer-price-index?input=previous_year,veebruar,2023
+```
+Expected outcome
 ```
 {
-  "chatId": "12345",
-  "authorId": "user123",
-  "input": "2023"  # optional - default to currentYear
+    "result": "Tarbijahinnaindeks võrreldes 2023. aastale eelneva aasta sama 
+    kuuga\\n\\n2023\\nveebruar: 17.6%"
 }
 ```
-### Example response
-```
-[
-  {
-    "chatId": "12345",
-    "content": "Viimane töötuse määr 2023. aastal on 6.5",
-    "buttons": [
-      {
-        "title": "More Info",
-        "payload": "info"
-      },
-      {
-        "title": "Help",
-        "payload": "help"
-      }
-    ],
-    "authorTimestamp": "2024-11-04T00:00:00.000Z",
-    "authorId": "user123",
-    "authorFirstName": "",
-    "authorLastName": "",
-    "created": "2024-11-04T00:00:00.000Z"
-  }
-]
 
+## * estimated-subsistence-minimum 
 ```
-
-## * consumer-price-index:
-### Example passed parameters
+curl localhost:8080/statistics-estonia/estimated-subsistence-minimum
+```
+Expected outcome
 ```
 {
-  "chatId": "12345",
-  "authorId": "user123",
-  "input": "previous_month, märts, 2023_2024" (optional)
-        # Also accepts input parameters individually
+    "result": "Arvestuslik elatusmiinimum 2023. aastal on 338.23 €/kuus"
 }
+```
 
+## * unemployment-rate
 ```
-### Example Response
+curl localhost:8080/statistics-estonia/unemployment-rate?input=2021
 ```
-[
-  {
-    "chatId": "12345",
-    "content": "Consumer Price Index for 2024 in March is 2.0, based on the indicator 'inflation'.",
-    "buttons": [
-      {
-        "title": "More Info",
-        "payload": "info"
-      },
-      {
-        "title": "Help",
-        "payload": "help"
-      }
-    ],
-    "authorTimestamp": "2024-11-04T00:00:00.000Z",
-    "authorId": "user123",
-    "authorFirstName": "",
-    "authorLastName": "",
-    "created": "2024-11-04T00:00:00.000Z"
-  }
-]
+Expected outcome
+```
+{
+    "result": "2021. aastal oli Eestis töötuse määr 6.5%"
+}
 ```

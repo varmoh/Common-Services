@@ -1,12 +1,19 @@
 declaration:
   call: declare
   version: 0.1
-  name: "Mock Holiday Data Service"
-  description: |
-    This service mocks a call to an API that returns nationa holidays in Estonia for the year 2024.
+  name: "All Holiday's Data Service"
+  description: "Returns all national holidays in Estonia for the year 2024"
   method: get
-  params: []
+  accepts: json
   returns: json
+  allowlist:
+    body:
+    - field: chatId
+      type: string
+      description: "The chat ID for the message"
+    - field: authorId
+      type: string
+      description: "The author ID for the message"
 
 prepare:
   assign:

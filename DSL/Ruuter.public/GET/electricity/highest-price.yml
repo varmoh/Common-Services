@@ -1,11 +1,26 @@
 declaration:
   call: declare
   version: 0.1
-  name: "Electricity Price Service"
-  description: |
-    This service fetches the Elering electricity prices for a user-specified date and returns the highest price.
-  method: get
+  name: "Electricity Highest Price Service"
+  description: "This service fetches the Elering electricity prices for a user-specified date and returns the highest price"
+  method: post
+  accepts: json
   returns: json
+  namespace: common-services
+  allowlist:
+    body:
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
+      - field: startDateTime
+        type: string
+        description: "Parameter 'startDateTime' - 'yyyy-mm-ddT00:00:00.000Z' - UTC"
+      - field: endDateTime
+        type: string
+        description: "Parameter 'endDateTime'- - 'yyyy-mm-ddT00:00:00.000Z' - UTC"
 
 # Prepare Dates based on today
 prepare:

@@ -2,24 +2,36 @@ declaration:
   call: declare
   version: 0.1
   name: "MOCK - Holiday Search Service"
-  description: "Searches for a national holiday by name in the 2024 calendar"
+  description: "MOCK - Searches for a national holiday by name in the 2024 calendar"
   method: get
+  accepts: json
   returns: json
+  namespace: common-services
+  allowlist:
+    body:
+    - field: chatId
+      type: string
+      description: "The chat ID for the message"
+    - field: authorId
+      type: string
+      description: "The author ID for the message"
+    - field: holidayName
+      type: string
+      description: "Holiday name for which to retrieve holidays - string - ex. 'jaanipäev'"
 
 prepare:
-  # Assign incoming 'name' parameter to 'searchTerm'
   assign:
-    searchTerm: "${incoming.params.name || 'uusaasta'}" # default to 'uusaasta'
+    chatId: "1010" # ${incoming.params.chatId}
+    authorId: "abc123" # ${incoming.params.authorId}
+    holidayName: "jaanipäev" # ${incoming.params.input.split(",")[0]}
   next: makeApiCall
 
 makeApiCall:
-  # Mock API call returning 2024 holidays
   call: reflect.mock
   args:
     url: "www.example.com"
     response: 
       holidays:
-        # List of holidays
         - date: "2024-01-01"
           name: "uusaasta"
         - date: "2024-02-24"
@@ -44,42 +56,64 @@ makeApiCall:
           name: "esimene jõulupüha"
         - date: "2024-12-26"
           name: "teine jõulupüha"
-  result: holidayData
-  next: filterHolidaysByName
+  result: data
+  next: filterHolidays
 
-filterHolidaysByName:
-  # Filter holidays by 'searchTerm'
+filterHolidays:
   assign:
-    filteredHolidays: ${holidayData.response.body.holidays.filter(holiday => holiday.name.toLowerCase().includes(searchTerm.toLowerCase()))}
+    filteredHolidays: ${data.response.body.holidays.filter(holiday => holiday.name.toLowerCase().includes(holidayName.toLowerCase()))}
   next: checkHoliday
 
 checkHoliday:
-  # Check if no holidays match
   switch:
     - condition: ${filteredHolidays.length < 1}
       next: holidayNotFound
   next: formatValue
 
-formatValue:
-  # Capitalize and format result
-  assign:
-    holiday:
-      result: "${filteredHolidays[0].name.charAt(0).toUpperCase() + filteredHolidays[0].name.slice(1)} on ${filteredHolidays[0].date}"
-  next: returnValue
-
-returnValue:
-  # Return holiday result
-  return: ${holiday}
-  next: end
-
 holidayNotFound:
-  # Default message if no holiday found
   assign:
-    noHoliday:
-      result: "Ei leia sellist riigipüha"
-  next: returnNoValue 
+    res: {
+      "result": "Ei leia sellist riigipüha"
+    }
+  next: formatMessages 
 
-returnNoValue:
-  # Return no-holiday message
-  return: ${noHoliday}
+formatValue:
+  assign:
+    res: {
+      "result": "${filteredHolidays[0].name.charAt(0).toUpperCase() + filteredHolidays[0].name.slice(1)} on ${filteredHolidays[0].date}"
+    }
+  next: formatMessages
+
+formatMessages:
+  call: reflect.mock # http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+    response:
+      body:
+        - chatId: "1010"
+          content: "Jaanipäev on 2024-06-24"
+          buttons: []
+          authorTimestamp: "2024-11-05T12:00:00Z"
+          authorId: "abc123"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-05T12:00:00Z"
+  result: formatMessage
+  next: returnResult
+
+returnResult:
+  return: ${formatMessage.response.body}
   next: end

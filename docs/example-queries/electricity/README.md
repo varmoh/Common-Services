@@ -1,47 +1,54 @@
-# Electricity service API
+# Electricity API Documentation (GET)
 
-## Fetch the lowest or highest electricity price for a specific date (default is today)
-**Endpoints**
+### Trigger the service via Bürokratt Chatbot
 ```
-electricity/mock/lowest-price
-electricity/lowest-price
-electricity/mock/highest-price
-electricity/highest-price
+Millal on täna odav elekter?
+Millal on täna kallis elekter?
 ```
 
-**Sample query - without date**
+### Trigger the service as a stand-alone
+NB! Required DSL parameters for all services
 ```
-curl localhost:8080/electricity/mock/lowest-price
-curl localhost:8080/electricity//lowest-price
-
-curl localhost:8080/electricity/mock/highest-price
-curl localhost:8080/electricity//highest-price
+chatId: "${incoming.params.chatId}"
+authorId: "${incoming.params.authorId}"
 ```
 
-**Expected outcome**
+Endpoints
+```
+electricity/current-price       # current pice          no params
+electricity/highest-price       # description           no params 
+electricity/lowest-price        # lowest price today    no params
+```
+
+## * current-price
+```
+curl localhost:8080/electricity/current-price
+```
+Expected outcome
 ```
 {
-    "response": [
-        "2024-10-10",
-        "23:00",
-        0.0
-    ]
+    "result": "Antud tunnil on elektri börsihind 84.3 €/mWh"
 }
 ```
 
-**Sample query - with a specific date parameter (userDate)**
+## * highest-price
 ```
-curl localhost:8080/electricity/mock/lowest-price?userDate=2024-05-05
-curl localhost:8080/electricity/lowest-price?userDate=2024-05-05
+curl localhost:8080/electricity/highest-price
 ```
-
-**Expected outcome**
+Expected outcome
 ```
 {
-    "response": [
-        "2024-05-05",
-        "15:00",
-        1.9
-    ]
+    "result": "Täna on kõrgeim elektri börsihind 385.85 €/mWh, kell 18:00"
+}
+```
+
+## * lowest-price 
+```
+curl localhost:8080/electricity/lowest-price
+```
+Expected outcome
+```
+{
+    "result": "Täna on madalaim elektri börsihind 3.82 €/mWh, kell 02:00"
 }
 ```

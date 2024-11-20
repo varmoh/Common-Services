@@ -1,93 +1,63 @@
-# Riigikogu Services API Documentation
+# Riigikogu API Documentation (GET)
 
-## Get member participation statistics
 
-**Endpoint**
+### Trigger the service via Bürokratt Chatbot
 ```
-riigikogu/mock/member-participation
-riigikogu/member-participation
-```
-
-**Accepts parameters**
-```
-starDate    # not required, defaults to endDate - 30 days 
-endDate     # not required, defaults to Today
-memberName  # required, otherwise query fails
+Mis oli riigikogu viimane hääletus?
+Mis on viimased hääletused parlamendis?
+Parlamendi liikme kohalolu Mart Helme?
 ```
 
-**Sample Query**
+
+### Trigger the service as a stand-alone
+NB! Required DSL parameters for all services
 ```
-curl "localhost:8080/services/member-participation?memberName=Jüri%20Ratas&startDate=2024-09-01&endDate=2024-09-30"
+chatId: "${incoming.params.chatId}"
+authorId: "${incoming.params.authorId}"
 ```
 
-**Expected outcome**
+Endpoints
 ```
-# If the member "Jüri Ratas" exists in the system and has participation data within the specified date range
+riigikogu/five-most-recent         # 5 most recent voting results         no params
+riigikogu/members-participation    # 5 participation statistics           input: memberName
+riigikogu/recent-voting            # recent voting result                 no params
+```
+---------------------------------------------------------------------------------------------
 
+## * five-most-recent  
+```
+curl localhost:8080/riigikogu/five-most-recent
+```
+Expected outcome
+```
 {
-    "response": "Jüri Ratas on olnud perioodil 2024-09-01 - 2024-09-30 kohal 20 korda ja puudunud 5 korda."
+    "result": "Viis viimast hääletustulemust:\\n 1. Meditsiiniseadme seaduse muutmise ja sellega seonduvalt teiste 
+    seaduste muutmise seadus (pädevuse andmine Ravimiametile)\\n Kohal: 86\\n Puudus: 15\\n Poolt: 65\\n Vastu: 0\\n 
+    Erapooletu: 1\\n Ei hääletanud: 35\\n\\n 2. Ravimiseaduse ja tervishoiuteenuste korraldamise seaduse muutmise 
+    seadus\\n Kohal: 86\\n Puudus: 15\\n Poolt: 63\\n Vastu: 0\\n Erapooletu: 1\\n Ei hääletanud: 37\\n\\n ...\n"
 }
 ```
 
-## Get the latest voting results from Riigikogu
-
-**Endpoint**
+## * members-participation
 ```
-riigikogu/recent-voting
-riigikogu/mock/recent-voting
+curl localhost:8080/riigikogu/members-participation?input=jaak
 ```
-
-**Sample Query**
+Expected outcome
 ```
-curl "localhost:8080/riigikogu/recent-voting"
-```
-
-**Expected outcome**
-```
-# If the latest voting data is successfully retrieved
-
 {
-    "response": "'Eelnõu X', Poolt on 50, Vastu on 30, Neutraalsed 10, Ei hääletanud 5"
+    "result": "Jaak Aab on aastal 2024 osalenud istungitel 98 korda ja puudunud 9 korda."
 }
 ```
 
-## Fetch 5 Most Recent Voting Results
-
-**Endpoint**
+## * recent-voting 
 ```
-riigikogu/five-most-recent
-riigikogu/mock/five-most-recent
+curl localhost:8080/riigikogu/recent-voting
 ```
-
-**Sample Query**
-```
-curl "localhost:8080/services/most-recent-votings"
-```
-
-**Expected outcome**
+Expected outcome
 ```
 {
-    "response": [
-        {
-            "title": "Perehüvitiste seaduse muutmise seadus",
-            "present": 81,
-            "absent": 20,
-            "inFavor": 46,
-            "against": 20,
-            "neutral": 0,
-            "abstained": 15
-        },
-        {
-            "title": "Vabariigi Valitsuse seaduse muutmise seadus",
-            "present": 84,
-            "absent": 17,
-            "inFavor": 53,
-            "against": 25,
-            "neutral": 0,
-            "abstained": 6
-        }
-        ...
-    ]
+    "result": "Viimane hääletus:\\n\\nMeditsiiniseadme seaduse muutmise ja sellega seonduvalt teiste seaduste muutmise 
+    seadus (pädevuse andmine Ravimiametile)\\n\\nKohal: 86\\nPuudus: 15\\nPoolt: 65\\nVastu: 0\\nErapooletu: 1\\nEi 
+    hääletanud: 35"
 }
-
 ```

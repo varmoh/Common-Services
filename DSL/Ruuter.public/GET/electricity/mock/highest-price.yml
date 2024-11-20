@@ -1,22 +1,36 @@
 declaration:
   call: declare
   version: 0.1
-  name: "MOCK - Get Highest Electricity Price"
-  description: |
-    "This mock service fetches the highest electricity price for a specified day."
-  method: "get"
-  parameters:
-    - date: "The date (YYYY-MM-DD) for which to retrieve the highest electricity price."
-  return: "json"
+  name: "MOCK - Electricity Highest Price Service"
+  description: "MOCK - This service fetches the Elering electricity prices for a user-specified date and returns the highest price"
+  method: post
+  accepts: json
+  returns: json
+  namespace: common-services
+  allowlist:
+    body:
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
+      - field: startDateTime
+        type: string
+        description: "Parameter 'startDateTime' - 'yyyy-mm-ddT00:00:00.000Z' - UTC"
+      - field: endDateTime
+        type: string
+        description: "Parameter 'endDateTime'- - 'yyyy-mm-ddT00:00:00.000Z' - UTC"
 
-prepareDates:
+prepare:
   assign:
-    userDate: ${incoming.params.userDate || new Date().toISOString().split('T')[0]}  # yyyy-mm-dd
-    startDateTime: ${new Date(new Date(userDate).getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] + "T21:00:00.000Z"}  # day before at 9am
-    endDateTime: ${userDate + "T20:59:59.000Z"}  # chosen date at 9pm - default time format
-  next: getPriceForPeriod
+    chatId: "1010" # ${incoming.params.chatId}
+    authorId: "abc123" # ${incoming.params.authorId}
+    startDateTime: "${new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] + 'T21:00:00.000Z'}"
+    endDateTime: "${new Date().toISOString().split('T')[0] + 'T20:59:59.000Z'}"
+  next: priceForToday
 
-getPriceForPeriod:
+priceForToday:
   call: reflect.mock
   args:
     request:
@@ -81,22 +95,49 @@ getPriceForPeriod:
 assignVariables:
   assign:
     maxPrice: ${eleringToday.response.body.data.ee.sort((a, b) => b.price - a.price)[0].price}  # get highest price
-    maxPriceTimestamp: ${eleringToday.response.body.data.ee.sort((a, b) => b.price - a.price)[0].timestamp}  # get highest timestamp
-
-    tallinnOffset: 10800  # Tallinn is UTC+3 during DST (3 hours in seconds)
-    adjustedTimestamp: ${maxPriceTimestamp + tallinnOffset}
+    maxPriceTimestamp: ${eleringToday.response.body.data.ee.sort((a, b) => b.price - a.price)[0].timestamp}  # get timestamp for highest price
+    tallinnOffset: 7200  # Tallinn is UTC+2 during DST (2 hours in seconds)
+    adjustedTimestamp: ${maxPriceTimestamp + tallinnOffset} 
     adjustedHour: ${Math.floor((adjustedTimestamp % 86400) / 3600)}
     timeVar: ${("0" + adjustedHour).slice(-2) + ":00"}
+  next: assignResponse
+
+assignResponse:
+  assign:
+    res: {
+       "result": "Täna on kõrgeim elektri börsihind ${maxPrice} €/mWh, kell ${timeVar}"
+    }
+  next: formatMessages
+
+formatMessages:
+  call: reflect.mock # http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+    response:
+      body:
+        - chatId: "1010"
+          content: "Täna on kõrgeim elektri börsihind 385.85 €/mWh, kell 18:00"
+          buttons: []
+          authorTimestamp: "2024-11-05T12:00:00Z"
+          authorId: "abc123"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-05T12:00:00Z"
+  result: formatMessage
   next: returnResult
 
 returnResult:
-  return: ${[userDate, timeVar, maxPrice]}
-
-# expected mock response
-# {
-#     "response": [
-#         "2024-10-11",
-#         "08:00",
-#         86.71
-#     ]
-# }
+  return: ${formatMessage.response.body}

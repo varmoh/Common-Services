@@ -2,15 +2,27 @@ declaration:
   call: declare
   version: 0.1
   name: "MOCK - Find Previous Holiday"
-  description: |
-    This mock service returns the most recent national holiday before today's date, using a mock API response of public holidays in 2024.
+  description: "MOCK - Returns most recent national holiday before today's date"
   method: get
-  params: []
+  accepts: json
   returns: json
+  allowlist:
+    body:
+    - field: chatId
+      type: string
+      description: "The chat ID for the message"
+    - field: authorId
+      type: string
+      description: "The author ID for the message"
+    - field: today
+      type: string
+      description: "The current date in ISO format - ex. 'yyyy-mm-dd'"
 
 prepare:
   assign:
-    today: "2024-02-24" #${new Date().toISOString().split("T")[0]}
+    chatId: "1010" # ${incoming.params.chatId}
+    authorId: "abc123" # ${incoming.params.authorId}
+    today: "2024-09-24" # ${new Date().toISOString().split("T")[0]}
   next: makeApiCall
 
 makeApiCall:
@@ -55,10 +67,41 @@ validateHoliday:
 
 formatValue:
   assign:
-    previousHoliday:
-      result: "Viimane riigipüha oli ${previousHoliday.name} - ${previousHoliday.date}"
-  next: returnValue
+    res: {
+     "result": "Viimane riigipüha oli ${previousHoliday.name} - ${previousHoliday.date}"
+    }
+  next: formatMessages
 
-returnValue:
-  return: "${previousHoliday}"
+formatMessages:
+  call: reflect.mock # http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+    response:
+      body:
+        - chatId: "1010"
+          content: "Viimane riigipüha oli taasiseseisvumispäev - 2024-08-20"
+          buttons: []
+          authorTimestamp: "2024-11-05T12:00:00Z"
+          authorId: "abc123"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-05T12:00:00Z"
+  result: formatMessage
+  next: returnResult
+
+returnResult:
+  return: ${formatMessage.response.body}
   next: end

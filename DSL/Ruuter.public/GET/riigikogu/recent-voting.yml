@@ -3,9 +3,24 @@ declaration:
   version: 0.1
   name: Recent voting Service
   description: A service that provides most recent voting result
-  method: get
+  method: post
+  accepts: json
   returns: json
   namespace: common-services
+  allowlist:
+    body:
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
+      - field: offSet
+        type: integer
+        description: "The time period with enough data (90 days)"
+      - field: end
+        type: string
+        description: "The end date for the voting results"
 
 prepareVariables:
   assign:

@@ -1,8 +1,8 @@
 declaration:
   call: declare
   version: 0.1
-  name: "Consumer Price Index Query"
-  description: "Provides CPI change information per month"
+  name: "MOCK - Consumer Price Index Query"
+  description: "MOCK - Provides CPI change information per month"
   method: post
   accepts: json
   returns: json

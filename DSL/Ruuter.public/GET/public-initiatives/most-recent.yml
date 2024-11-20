@@ -1,10 +1,38 @@
 declaration:
   call: declare
   version: 0.1
-  description: get 5 most-recent active initiatives
-  method: get
+  name: "5 most recent active initiatives service"
+  description: "Provides information for 5 most recent active initiatives"
+  method: post
+  accepts: json
   returns: json
   namespace: common-services
+  allowlist:
+    body:
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
+      - field: order
+        type: string
+        description: "The order for the initiatives"
+      - field: distinct
+        type: string
+        description: "The distinct for the initiatives"
+      - field: limit
+        type: string
+        description: "Amount of initiatives"
+      - field: rahvaalgatus
+        type: string
+        description: "The rahvaalgatus API"
+      - field: initiativeEventHeader
+        type: string
+        description: "Official initiative event header"
+      - field: initiativeHeader
+        type: string
+        description: "Official initiative header"
 
 prepareVariables:
   assign:

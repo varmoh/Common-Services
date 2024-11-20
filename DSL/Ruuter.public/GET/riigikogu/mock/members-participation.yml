@@ -1,69 +1,111 @@
 declaration:
   call: declare
   version: 0.1
-  name: MOCK Member Participation Statistics Service
-  description: A MOCK service that provides participation statistics for Riigikogu members.
-  method: get
+  name: "MOCK - Member Participation Statistics Service"
+  description: "MOCK - A service that provides participation statistics for Riigikogu members"
+  method: post
+  accepts: json
   returns: json
   namespace: common-services
+  allowlist:
+    body:
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
+      - field: endDate
+        type: string
+        description: "The end date for members praticipation"
+      - field: startDate
+        type: string
+        description: "The start date for members participation"
+      - field: year
+        type: string
+        description: "The year for members participation"
+      - field: lang
+        type: string
+        description: "The language for members participation"
+      - field: memberName
+        type: string
+        description: "The member name for members participation"
 
-prepareVariables:
+prepare:
   assign:
-    currentDate: ${new Date().toISOString().split('T')[0]} # yyyy-mm-dd
-    endDate: ${ incoming.params.endDate || currentDate}
-    startDate: ${ incoming.params.startDate || new Date(new Date(endDate).setMonth(new Date(endDate).getMonth() - 1)).toISOString().split('T')[0] } # yyyy-mm-dd
+    chatId: "1010" # ${incoming.params.chatId}
+    authorId: "abc123" # ${incoming.params.authorId}
+
+    endDate: ${new Date().toISOString().split('T')[0]} # yyyy-mm-dd format
+    startDate: ${new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]}  # First day of the current year. yyyy-mm-dd
+    year: ${(new Date().getFullYear()).toString()}
     lang: "ET"
-    memberName:  ${incoming.params.memberName} #"Jüri Ratas"
-  next: checkMember
+    memberName: "Jaakb Aab" #"${incoming.params.input.split(',')[0]}"
+  next: makeAPIRequest
 
-checkMember:
-  switch:
-    - condition: ${!memberName}
-      next: memberNotFound
-  next: mockAPIResponse
+makeAPIRequest:
+  call: reflect.mock # http.post
+  args:
+    url: "https://api.riigikogu.ee/api/statistics/participations/plenary?endDate=${endDate}&startDate=${startDate}&lang=${lang}"
+    headers:
+      accept: "application/json"
+  result: attendance
+  next: filterResult
 
-mockAPIResponse:
+filterResult:
   assign:
-    kohaloluData: 
-      response:
-        body: [
-          { 
-            fullName: "Jüri Ratas",
-            participated: 20,
-            absent: 5
-          },
-          { 
-            fullName: "Kaja Kallas",
-            participated: 25,
-            absent: 3
-          },
-          { 
-            fullName: "Mart Helme",
-            participated: 15,
-            absent: 10
-          }
-        ]
-  next: filterMember
+    memberData: ${attendance.response.body.find(member => member.fullName.toLowerCase().includes(memberName.toLowerCase()))}
+  next: checkFilterResult
 
-filterMember:
-  assign:
-    memberData: ${kohaloluData.response.body.find(member => member.fullName === memberName)}
-  next: checkMemberExists
-
-checkMemberExists:
+checkFilterResult:
   switch:
-    - condition: ${memberData !== undefined && memberData !== null}
-      next: returnResult
-  next: memberNotFound
+    - condition: ${memberData === undefined || memberData === null}
+      next: formatNotFound
+  next: formatResult
+
+formatNotFound:
+  assign:
+    res: {
+      "result": "Riigikogu liiget nimega '${memberName}' ei leitud. Palun proovige uuesti."
+    }
+  next: formatMessages
+
+formatResult:
+  assign:
+    res: {
+      "result": "${memberData.fullName} on aastal ${year} osalenud istungitel ${memberData.participated} korda ja puudunud ${memberData.absent} korda."
+    }
+  next: formatMessages
+
+formatMessages:
+  call: reflect.mock # http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+    response:
+      body:
+        - chatId: "1010"
+          content: "Jaak Aab on aastal 2024 osalenud istungitel 96 korda ja puudunud 9 korda."
+          buttons: []
+          authorTimestamp: "2024-11-05T12:00:00Z"
+          authorId: "abc123"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-05T12:00:00Z"
+  result: formatMessage
+  next: returnResult
 
 returnResult:
-  return: ${memberData.fullName + " on olnud perioodil " + startDate + " - " + endDate + " kohal " + memberData.participated + " korda ja puudunud " + memberData.absent + " korda."}
-  next: end
-
-memberNotFound:
-  return: "Error: Member not found."
-  next: end
-
-returnError:
-  return: "Error: failed to get participation data."
-  next: end
+  return: ${formatMessage.response.body}

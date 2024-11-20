@@ -2,11 +2,24 @@ declaration:
   call: declare
   version: 0.1
   name: "Find Holidays Until End of Year"
-  description: |
-    This service returns all holidays from today's date until the end of the year, based on a mock API response of 2024 public holidays.
+  description: "Returns all holidays from today till the end of the year"
   method: get
-  params: []
+  accepts: json
   returns: json
+  allowlist:
+    body:
+    - field: chatId
+      type: string
+      description: "The chat ID for the message"
+    - field: authorId
+      type: string
+      description: "The author ID for the message"
+    - field: today
+      type: string
+      description: "The current date in ISO format - ex. 'yyyy-mm-dd'"
+    - field: yearEnd
+      type: string
+      description: "The end of the year in ISO format - ex. 'yyyy-mm-dd'"
 
 prepare:
   assign:

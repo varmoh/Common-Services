@@ -1,44 +1,32 @@
-# Weather Service API Documentation
-## Estonian-specific weather information. 
+# Weather API Documentation (POST)
 
-**Endpoint**
+### Trigger the service via Bürokratt Chatbot
 ```
-/POST/weather/EE
-```
-
-**Service accepts parameters**
-```
-countryCode # not required - defaults to "EE"
-region      # Required! - otherwise returns error
+Mis ilm on Tallinnas?
+Mis ilm on Pärnus?
+Mis ilm on Paides?
 ```
 
-**Sample query**
+### Trigger the service as a stand-alone
+NB! Required DSL parameters for all services
 ```
-curl -X POST "http://localhost:8080/weather/EE?region=tallinn" -H "Content-Type: application/json"
+chatId: "${incoming.body.chatId}"
+authorId: "${incoming.body.authorId}"
 ```
 
-**Expected outcome**
+Endpoints
+```
+weather/EE    #accepts params (e.g incoming.body.input = "paide")
+```
 
+
+## * EE
+```
+curl -X POST http://localhost:8080/weather/EE -d '{"chatId": "123", "authorId": "abc123", "input": "paide"}'
+```
+Expected outcome
 ```
 {
-    "response": [
-        {
-            "LaiusMinut": "28",
-            "Time": "2024-10-02T15:00:00.000+03:00",
-            "paring": "999",
-            "wl1ha": "5.000",
-            "tuulekylm": "9,4",
-            ...
-            "sunrise": "2024-10-02T05:29:38Z",
-            "sunset": "2024-10-02T16:50:43Z",
-            "sunrise_eet": "2024-10-02T07:29:38.000+03:00",
-            "sunset_eet": "2024-10-02T18:50:43.000+03:00",
-            "location": {
-                "long_address": "Harju maakond, Tallinn, Kesklinna linnaosa",
-                "county": "Harju maakond",
-                "county_ehak": "37"
-            }
-        }
-    ]
+    "result": "Hetkel on õhutemperatuur 4.8°C (tajutav 0.6°C), puhub tuul 5.1m/s."
 }
 ```

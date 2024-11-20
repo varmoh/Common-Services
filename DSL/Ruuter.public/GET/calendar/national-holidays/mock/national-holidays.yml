@@ -1,12 +1,25 @@
 declaration:
   call: declare
   version: 0.1
-  name: "MOCK - All Estonian National Holidays Data Service"
-  description: |
-    This service mocks a call to an API that returns nationa holidays in Estonia for the year 2024.
+  name: "MOCK - All Holiday's Data Service"
+  description: "MOCK - Returns all national holidays in Estonia for the year 2024"
   method: get
-  params: []
+  accepts: json
   returns: json
+  allowlist:
+    body:
+    - field: chatId
+      type: string
+      description: "The chat ID for the message"
+    - field: authorId
+      type: string
+      description: "The author ID for the message"
+
+prepare:
+  assign:
+    chatId: "1010" # ${incoming.params.chatId}
+    authorId: "abc123" #${incoming.params.authorId}
+  next: makeApiCall
 
 makeApiCall:
   call: reflect.mock
@@ -43,16 +56,54 @@ makeApiCall:
   next: formatResult
 
 formatResult:
-  call: reflect.mock
+  call: reflect.mock # http.post
   args:
-    url: "[#DMAPPER]/hbs/calendar/national-holidays/get_national_holidays"
+    url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holidays"
+    headers:
+      type: json
     body:
-      holidaysYTD: ${holidaysYTD}
-    response:
-      result: "Kõik pühad sellel aastal on:\n* 2024-01-01\nuusaasta\n\n* 2024-02-24\niseseisvuspäev, Eesti Vabariigi aastapäev\n\n* 2024-03-29\nsuur reede\n\n* 2024-03-31\nülestõusmispühade 1. püha\n\n* 2024-05-01\nkevadpüha\n\n* 2024-05-19\nnelipühade 1. püha\n\n* 2024-06-23\nvõidupüha\n\n* 2024-06-24\njaanipäev\n\n* 2024-08-20\ntaasiseseisvumispäev\n\n* 2024-12-24\njõululaupäev\n\n* 2024-12-25\nesimene jõulupüha\n\n* 2024-12-26\nteine jõulupüha\n\n"
+      data: ${holidayData.response.body.holidays}
+    response: {
+        "result": "Kõik pühad sellel aastal on:\n* 2024-01-01\nuusaasta\n\n* 2024-02-24\niseseisvuspäev, Eesti Vabariigi aastapäev\n\n* 2024-03-29\nsuur reede\n\n* 2024-03-31\nülestõusmispühade 1. püha\n\n* 2024-05-01\nkevadpüha\n\n* 2024-05-19\nnelipühade 1. püha\n\n* 2024-06-23\nvõidupüha\n\n* 2024-06-24\njaanipäev\n\n* 2024-08-20\ntaasiseseisvumispäev\n\n* 2024-12-24\njõululaupäev\n\n* 2024-12-25\nesimene jõulupüha\n\n* 2024-12-26\nteine jõulupüha\n\n"
+    }
   result: formattedHolidays
-  next: returnValue
+  next: assignResponse
+  
+assignResponse:
+  assign:
+    res: ${formattedHolidays.response.body}
+  next: formatMessages
 
-returnValue:
-  return: ${formattedHolidays.response.body}
+formatMessages:
+  call: reflect.mock # http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+    response:
+      body:
+        - chatId: "1010"
+          content: "Kõik pühad sellel aastal on:\n* 2024-01-01\nuusaasta\n\n* 2024-02-24\niseseisvuspäev, Eesti Vabariigi aastapäev\n\n* 2024-03-29\nsuur reede\n\n* 2024-03-31\nülestõusmispühade 1. püha\n\n* 2024-05-01\nkevadpüha\n\n* 2024-05-19\nnelipühade 1. püha\n\n* 2024-06-23\nvõidupüha\n\n* 2024-06-24\njaanipäev\n\n* 2024-08-20\ntaasiseseisvumispäev\n\n* 2024-12-24\njõululaupäev\n\n* 2024-12-25\nesimene jõulupüha\n\n* 2024-12-26\nteine jõulupüha\n\n"
+          buttons: []
+          authorTimestamp: "2024-11-05T12:00:00Z"
+          authorId: "abc123"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-05T12:00:00Z"
+  result: formatMessage
+  next: returnResult
+
+returnResult:
+  return: ${formatMessage.response.body}
   next: end

@@ -1,14 +1,49 @@
 declaration:
-  name: "MOCK - Holiday Filter by Month"
-  description: "Fetches and filters Estonian national holidays for a specified month in 2024."
-  method: "get"
-  return: "json"
+  name: "MOCK - Filter by Month"
+  description: "MOCK - Fetches and filters Estonian national holidays for a specified month in 2024"
+  method: get
+  accepts: json
+  returns: json
+  namespace: common-services
+  allowlist:
+    body:
+    - field: chatId
+      type: string
+      description: "The chat ID for the message"
+    - field: authorId
+      type: string
+      description: "The author ID for the message"
+    - field: month
+      type: string
+      description: "The incoming month for which to retrieve holidays - ex. 'mai' or 'veebruar'"
 
 prepare:
-  assign: # MM - month
-    searchTerm: "06" #"${incoming.params.month || (new Date().getMonth() + 1).toString()}" # default to current month - ex."10"/MM for october 
-  next: makeApiCall
+  assign:
+    chatId: "1010"
+    authorId: "abc123"
+    month: "juuni"
+    monthMap:
+      map:
+        "jaanuar": "01"
+        "veebruar": "02"
+        "märts": "03"
+        "aprill": "04"
+        "mai": "05"
+        "juuni": "06"
+        "juuli": "07"
+        "august": "08"
+        "september": "09"
+        "oktoober": "10"
+        "november": "11"
+        "detsember": "12"
+  next: prepareMonth
 
+prepareMonth:
+  assign:
+    month: ${monthMap.map[month]}
+  next: makeApiCall
+  
+#--------------------------------------------------------------------------------------------------
 makeApiCall:
   call: reflect.mock
   args:
@@ -41,55 +76,88 @@ makeApiCall:
         - date: "2024-12-26"
           name: "teine jõulupüha"
   result: holidayData
-  next: filterHolidaysByMonth
+  next: filterHolidays
 
-filterHolidaysByMonth:
+filterHolidays:
   assign:
-    filteredHolidays: ${holidayData.response.body.holidays.filter(holiday => !isNaN(searchTerm) && parseInt(searchTerm) >= 1 && parseInt(searchTerm) <= 12 && (new Date(holiday.date).getMonth() + 1 === parseInt(searchTerm)))}
+    holidays: ${holidayData.response.body.holidays.filter(holiday => holiday.date.slice(5, 7) === month.padStart(2, '0'))}
   next: checkHolidays
 
 checkHolidays:
   switch:
-    - condition: ${filteredHolidays.length < 1}
+    - condition: ${holidays.length < 1}
       next: holidayNotFound
-    - condition: ${filteredHolidays.length > 1}
-      next: formatResult
-    - condition: ${filteredHolidays.length === 1}
-      next: assignValue
-  next: assignValue
+    - condition: ${holidays.length === 1}
+      next: assignSingleValue
+    - condition: ${holidays.length > 1}
+      next: formatValue
 
-assignValue:
-  assign:
-    holiday:
-      result: "Antud kuus on ${filteredHolidays[0].name} - ${filteredHolidays[0].date}"
-  next: returnValue
-
-formatResult:
-  call: reflect.mock
-  args:
-    url: "[#DMAPPER]/hbs/calendar/national-holidays/get_national_holiday_by_month"
-    response:
-      result: "Kõik riigipühad antud kuus on: \n*2024-06-23\n võidupüha\n\n*2024-06-24\n jaanipäev\n\n"
-  result: holiday
-  next: returnValue
-
-returnValue:
-  return: ${holiday.response.body}
-  next: end
-
-returnDMValue:
-  return: ${holiday.result}
-  next: end
-
-#--------------------------------
+#--------------------------------------------------------------------------------------------------
 holidayNotFound:
   assign:
-    noHoliday:
-      result: "Ei leia riigipühi antud kuus"
-  next: returnNoHolidays
+    res: {
+      "result": "Antud kuus ei ole riigpühi"
+    }
+  next: formatMessages
 
-returnNoHolidays:
-  return: ${noHoliday}
+assignSingleValue:
+  assign:
+    res: {
+      "result": "Antud kuus on ${holidays[0].name} - ${holidays[0].date}"
+    }
+  next: formatMessages
+
+formatValue:
+  call: reflect.mock # http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holiday_by_month"
+    headers:
+      type: json
+    body:
+      data: ${holidays}
+    response: {
+        "result": "Kõik riigipühad antud kuus on: \n*2024-06-23\n võidupüha\n\n*2024-06-24\n jaanipäev\n\n"
+      }
+  result: holiday
+  next: assignResponse
+
+#--------------------------------------------------------------------------------------------------
+assignResponse:
+  assign:
+    res: ${holiday.response.body}
+  next: formatMessages
+
+# format throgh DM bot response to messages
+formatMessages:
+  call: reflect.mock # http.post
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+    response:
+      body:
+        - chatId: "1010"
+          content: "Kõik riigipühad antud kuus on: \n*2024-06-23\n võidupüha\n\n*2024-06-24\n jaanipäev\n\n"
+          buttons: []
+          authorTimestamp: "2024-11-05T12:00:00Z"
+          authorId: "abc123"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-05T12:00:00Z"
+  result: formatMessage
+  next: returnResult
+
+returnResult:
+  return: ${formatMessage.response.body}
   next: end
-
-
