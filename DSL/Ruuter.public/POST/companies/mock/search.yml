@@ -1,41 +1,43 @@
 declaration:
  call: declare
  version: 0.1
- description: "Search Companies by name"
+ name: "MOCK - Search"
+ description: "MOCK - Search service to trigger and companies by name"
  method: POST
  accepts: JSON
  returns: JSON
  namespace: common-services
  allowlist:
    params:
-     - field: input
-       type: string
-       description: "Parameter 'Input'"
      - field: chatId
        type: string
        description: "Parameter 'chatId'"
      - field: authorId
        type: string
-       description: "Parameter 'authorId'"    
+       description: "Parameter 'authorId'"
+     - field: input
+       type: array 
+       description: "input array for serviceName and name"
+     - field: serviceName
+       type: string
+       description: "service name to trigger"
      - field: name
        type: string
-       description: "Parameter 'name'"  
-   headers:
-     - field: cookie
-       type: string
-       description: "Cookie field"
+       description: "company 'name'"  
+
 
 assign_values:
   assign:
+    chatId: ${incoming.body.chatId}
+    authorId: ${incoming.body.authorId}
     input: ${incoming.body.input}
     serviceName: ${input[0]}
     name: ${input[1]}
-    chatId: ${incoming.body.chatId}
-    authorId: ${incoming.body.authorId}
+
     buttonPrefix: "#common_service, /POST/companies/${serviceName}, ("
 
 getCompaniesWithName:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
@@ -46,7 +48,7 @@ getCompaniesWithName:
   result: res
 
 mapData:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/get_company_with_name"
     headers:
@@ -56,7 +58,7 @@ mapData:
   result: mappedData
 
 addButtonsToFirstBotMessage:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/add_buttons_to_first_message"
     headers:
@@ -72,10 +74,10 @@ addButtonsToFirstBotMessage:
 extractMergedResult:
   assign:
     botMsg: ${merged_messages_res.response.body}
-  next: format_messages
+  next: # format_messages
 
 format_messages:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
     headers:
@@ -92,8 +94,25 @@ format_messages:
           "created": "${new Date().toISOString()}",
         }
   result: res
-  next: return_result
+  next: assignMock # return_result
 
 return_result:
   return: ${res.response.body}
   next: end
+
+assignMock:
+  assign:
+    res:
+      result:
+        - chatId: "mock_chat_id_12345"
+          content: ""
+          buttons: "[{\"title\": \"MockCompany OÜ\",\"payload\": \"#common_service, /POST/companies/revenues, (12345467)\"}]"
+          authorTimestamp: "2024-11-20T11:44:35.293Z"
+          authorId: "mock_author_id_67890"
+          authorFirstName: ""
+          authorLastName: ""
+          created: "2024-11-20T11:44:35.294Z"
+  next: returnResult
+
+returnResult:
+  return: ${res}

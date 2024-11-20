@@ -1,0 +1,121 @@
+declaration:
+  call: declare
+  version: 0.1
+  name: "MOCK - Simple Company Data"
+  description: "MOCK - Gets information for a business from the Business Register"
+  method: POST
+  accepts: JSON
+  returns: JSON
+  namespace: common-services
+  allowlist:
+    params:
+      - field: chatId
+        type: string
+        description: "Parameter 'chatId'"
+      - field: authorId
+        type: string
+        description: "Parameter 'authorId'"   
+      - field: code
+        type: string
+        description: "Registry code of the requested company"
+      - field: reg_code
+        type: string
+        description: "Registry code of the requested company"
+
+extract_body:
+  assign:
+    code: ${incoming.body.input[0]}
+    chatId: ${incoming.body.chatId}
+    authorId: ${incoming.body.authorId}
+
+getSimpleCompanyData:
+  call: reflect.mock
+  args:
+    url: "[#XTR]/ar/lihtandmed_v3"
+    body:
+      reg_code: "12345678"
+      username: "mock_username"
+      password: "mock_password"
+    response:
+      lihtandmed_v3Response:
+        paring:
+          ariregister_kasutajanimi: "mock_username"
+          ariregister_parool: "mock_password"
+          ariregistri_kood: "12345678"
+        keha:
+          ettevotjad:
+            item:
+              evnimi: "Mock Company OÜ"
+              oiguslik_vorm: "OÜ"
+              oiguslik_vorm_tekstina: "Osaühing"
+              ariregistri_kood: "12345678"
+              staatus: "R"
+              staatus_tekstina: "Registrisse kantud"
+              registrist_kustutamise_aeg: ""
+              piirkond: "1"
+              piirkond_tekstina: "Tallinn"
+              evaadressid:
+                asukoht_ettevotja_aadressis: "Mock Address 1"
+                aadress_riik: "EST"
+                aadress_riik_tekstina: "Eesti"
+                asukoha_ehak_kood: "0000"
+                asukoha_ehak_tekstina: "Mock Region"
+                indeks_ettevotja_aadressis: "10000"
+                aadress_ads__ads_oid: "MOCK_OID"
+                aadress_ads__adr_id: "MOCK_ADR_ID"
+                aadress_ads__ads_normaliseeritud_taisaadress: "Mock Full Address"
+                aadress_ads__adob_id: "MOCK_ADOB_ID"
+                aadress_ads__koodaadress: "MOCK_KOODAADRESS"
+              esmakande_aeg: "01.01.2020"
+          leitud_ettevotjate_arv: "1"
+  result: simpleCompanyData
+  next: mapSimpleCompanyData
+
+mapSimpleCompanyData:
+  call: reflect.mock
+  args:
+    url: "[#DMAPPER]/common-services/hbs/get-business-register-simple-company-data"
+    headers:
+      type: "json"
+    body:
+      keha: ${simpleCompanyData.response.body.lihtandmed_v3Response.keha.ettevotjad.item}
+  result: mappedSimpleCompanyData
+  next: assign_response
+
+assign_response:
+  assign:
+    res: ${mappedSimpleCompanyData.response.body}
+  next: format_messages
+
+format_messages:
+  call: reflect.mock
+  args:
+    url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+  result: 
+  next: assignMock # return_result
+
+#--------------------------------------------------------------------------------------------------
+return_result:
+  return: ${formatted_messages_res.response.body}
+
+assignMock:
+  assign:
+    res:
+      result: "MockCompany OÜ (registrikood 787654432) on registreeritud 6. augustil 2015 ning on hetkel äriregistris tegutsev ettevõte."
+  next: returnResult
+
+returnResult:
+  return: ${res}

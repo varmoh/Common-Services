@@ -3,9 +3,9 @@ declaration:
   version: 0.1
   name: "Unemployment Rate"
   description: "Provides Unemployment Rate in Estonia"
-  method: post
-  accepts: json
-  returns: json
+  method: POST
+  accepts: JSON
+  returns: JSON
   namespace: common-services
   allowlist:
     body:

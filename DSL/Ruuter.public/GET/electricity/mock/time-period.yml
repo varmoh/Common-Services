@@ -4,10 +4,10 @@ declaration:
   name: "MOCK - Electricity Price Service"
   description: |
     This service fetches the Nordpool electricity prices for a user-specified date.
-  method: get
+  method: GET
   params:
     userTime: string  # yyyy-mm-dd format
-  returns: json
+  returns: JSON
 
 # Prepare Dates based on userTime
 prepareDates:

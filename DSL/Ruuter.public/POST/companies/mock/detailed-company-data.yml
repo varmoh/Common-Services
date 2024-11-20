@@ -1,0 +1,142 @@
+declaration:
+  call: declare
+  version: 0.1
+  description: "Gets contact information for a business from the Business Register"
+  method: POST
+  accepts: JSON
+  returns: JSON
+  namespace: common-services
+  allowlist:
+    params:
+      - field: chatId
+        type: string
+        description: "Parameter 'chatId'"
+      - field: authorId
+        type: string
+        description: "Parameter 'authorId'"  
+      - field: code
+        type: string
+        description: "Registry code of the requested company"
+
+extract_body:
+  assign:
+    code: ${incoming.body.input[0]}
+    chatId: ${incoming.body.chatId}
+    authorId: ${incoming.body.authorId}
+
+getDetailedCompanyData:
+  call: reflect.mock
+  args:
+    url: "[#XTR]/ar/detailandmed_v2"
+    body:
+      reg_code: "${code}" 
+      username: "[#XTR_AR_USERNAME]" 
+      password: "[#XTR_AR_PASSWORD]"
+    response:
+      detailandmed_v2Response:
+        keha:
+          ettevotjad:
+            item:
+              ariregistri_kood: "12345678"
+              ettevotja_id: "9000000001"
+              nimi: "MockCompany Ltd"
+              kmkr_number: "EE123456789"
+              yldandmed:
+                esmaregistreerimise_kpv: "2015-01-01Z"
+                staatus: "R"
+                staatus_tekstina: "Registrisse kantud"
+                piirkond: "1"
+                piirkond_tekstina: "Tallinn"
+                oiguslik_vorm: "OÜ"
+                oiguslik_vorm_tekstina: "Limited company"
+                arinimed:
+                  item:
+                    kirje_id: "1234567"
+                    kaardi_piirkond: "1"
+                    kaardi_nr: "1"
+                    sisu: "MockCompany Ltd"
+                    algus_kpv: "2015-01-01Z"
+                aadressid:
+                  item:
+                    - kirje_id: "1234560"
+                      riik: "EST"
+                      riik_tekstina: "Estonia"
+                      ehak: "0298"
+                      ehak_nimetus: "Kesklinna linnaosa, Tallinn"
+                      tanav_maja_korter: "Mock Street 42"
+                      postiindeks: "12345"
+                      algus_kpv: "2015-01-01Z"
+                      lopp_kpv: "2022-01-01Z"
+                    - kirje_id: "2345678"
+                      riik: "EST"
+                      riik_tekstina: "Estonia"
+                      ehak: "0298"
+                      ehak_nimetus: "Kesklinna linnaosa, Tallinn"
+                      tanav_maja_korter: "Mock Street 44"
+                      postiindeks: "12346"
+                      algus_kpv: "2022-01-01Z"
+                kapitalid:
+                  item:
+                    kirje_id: "1234569"
+                    kapitali_suurus: "5000.0"
+                    kapitali_valuuta: "EUR"
+                    algus_kpv: "2015-01-01Z"
+                sidevahendid:
+                  item:
+                    - kirje_id: "3456789"
+                      liik: "EMAIL"
+                      sisu: "contact@mockcompany.com"
+                    - kirje_id: "4567890"
+                      liik: "WWW"
+                      sisu: "http://www.mockcompany.com"
+  result: detailedCompanyData
+  next: mapDetailedCompanyData
+
+mapDetailedCompanyData:
+  call: reflect.mock
+  args:
+    url: "[#DMAPPER]/common-services/hbs/get-business-register-detailed-company-data"
+    headers:
+      type: "json"
+    body:
+      keha: ${detailedCompanyData.response.body.detailandmed_v2Response.keha.ettevotjad.item}
+  result: mappedDetailedCompanyData
+  next: assign_response
+
+assign_response:
+  assign:
+    res: ${mappedDetailedCompanyData.response.body}
+  next: format_messages
+
+format_messages:
+  call: reflect.mock
+  args:
+    url: "[#DMAPPER]/common-services/hbs/filter-contact-information-for-business-register"
+    headers:
+      type: json
+    body:
+      data:
+        {
+          "botMessages": "${[res]}",
+          "chatId": "${chatId}",
+          "authorId": "${authorId}",
+          "authorFirstName": "",
+          "authorLastName": "",
+          "authorTimestamp": "${new Date().toISOString()}",
+          "created": "${new Date().toISOString()}",
+        }
+  result: formatted_messages_res
+  next: assignMock # return_result
+
+return_result:
+  return: ${formatted_messages_res.response.body}
+#-------------------------------------------------------------------------------------------------
+
+assignMock:
+  assign:
+    res:
+      result: "MockCompany OÜ (registrikood 12345678) on registreeritud 1. jaanuaril 2020 ning on hetkel äriregistris tegutsev ettevõte."
+  next: returnResult
+
+returnResult:
+  return: ${res}

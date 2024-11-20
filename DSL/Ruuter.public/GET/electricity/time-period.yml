@@ -5,11 +5,11 @@ declaration:
   name: "Electricity Price Service"
   description: |
     This service fetches Nordpool electricity prices for a specified date range.
-  method: get
+  method: GET
   params:
     startDate: string  # yyyy-mm-dd format (start of the period)
     endDate: string    # yyyy-mm-dd format (end of the period)
-  returns: json
+  returns: JSON
 
 # Prepare startDate, endDate
 getDates:

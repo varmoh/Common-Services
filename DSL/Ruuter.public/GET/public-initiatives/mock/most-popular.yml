@@ -3,9 +3,9 @@ declaration:
   version: 0.1
   description: "MOCK - Provides information for 5 most-popular active initiavites"
   name: "MOCK - Most Popular Initiatives Service"
-  method: post
-  accepts: json
-  returns: json
+  method: POST
+  accepts: JSON
+  returns: JSON
   namespace: common-services
   allowlist:
     body:

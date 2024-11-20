@@ -2,9 +2,9 @@ declaration:
   call: declare
   version: 0.1
   description: "Gets Companies Revenues"
-  method: post
-  accepts: json
-  returns: json
+  method: POST
+  accepts: JSON
+  returns: JSON
   namespace: common-services
   allowlist:
     params:

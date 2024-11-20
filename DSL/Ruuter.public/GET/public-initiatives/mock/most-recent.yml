@@ -3,9 +3,9 @@ declaration:
   version: 0.1
   name: "MOCK - 5 most recent active initiatives service"
   description: "MOCK - Provides information for 5 most recent active initiatives"
-  method: post
-  accepts: json
-  returns: json
+  method: POST
+  accepts: JSON
+  returns: JSON
   namespace: common-services
   allowlist:
     body:

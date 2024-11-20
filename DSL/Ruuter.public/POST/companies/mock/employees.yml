@@ -1,7 +1,8 @@
 declaration:
   call: declare
   version: 0.1
-  description: "Gets Companies Employees"
+  name: "MOCK Employees"
+  description: "MOCK - Gets Companies Employees"
   method: POST
   accepts: JSON
   returns: JSON
@@ -20,16 +21,12 @@ declaration:
       - field: county
         type: string
         description: "Parameter 'county'"
-    headers:
-      - field: cookie
-        type: string
-        description: "Cookie field"
 
 extract_body:
   assign:
-    registry_code: ${incoming.body.input[0]}
     chatId: ${incoming.body.chatId}
     authorId: ${incoming.body.authorId}
+    registry_code: ${incoming.body.input[0]}
     county: ${incoming.body.input[0]}
 
 checkForParams:
@@ -41,7 +38,7 @@ checkForParams:
   next: getAll
 
 getWithCode:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
@@ -51,7 +48,7 @@ getWithCode:
   next: mapCodeData
 
 mapCodeData:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/get_employees_with_code"
     headers:
@@ -77,7 +74,7 @@ return_no_companies_found:
   next: end
 
 getWithCounty:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
@@ -87,7 +84,7 @@ getWithCounty:
   next: mapCountyData
 
 mapCountyData:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/get_total_with_county"
     headers:
@@ -103,7 +100,7 @@ assign_county_response:
   next: format_messages
 
 getAll:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
@@ -113,7 +110,7 @@ getAll:
   next: mapAllData
 
 mapAllData:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/get_total"
     headers:
@@ -129,7 +126,7 @@ assign_response:
   next: format_messages
 
 format_messages:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
     headers:
@@ -146,6 +143,16 @@ format_messages:
           "created": "${new Date().toISOString()}",
         }
   result: formatted_messages_res
+  next: assignMock # return_result
 
 return_result:
   return: ${formatted_messages_res.response.body}
+#-------------------------------------------------------------------------- 
+
+assignMock:
+  assign:
+    res:
+      result: "Ettevõttes MockCompany OÜ töötab 10 inimest."
+
+returnResult:
+  return: ${res}

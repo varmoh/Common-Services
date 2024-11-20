@@ -6,9 +6,9 @@ declaration:
     - authorId: "The author ID for the message- string"
     - month: "The month for which to retrieve holidays - string - ex. 'mai' or 'veebruar'"
 
-  method: get
-  accepts: json
-  returns: json
+  method: GET
+  accepts: JSON
+  returns: JSON
   namespace: common-services
   allowlist:
     body:

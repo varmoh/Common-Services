@@ -1,13 +1,14 @@
 declaration:
   call: declare
   version: 0.1
-  description: "Gets Companies Employees"
+  name: "MOCK - Work Force Taxes"
+  description: "Gets Companies Paid Work Force Taxes"
   method: POST
   accepts: JSON
   returns: JSON
   namespace: common-services
   allowlist:
-    body:
+    params:
       - field: chatId
         type: string
         description: "Parameter 'chatId'"
@@ -20,10 +21,6 @@ declaration:
       - field: county
         type: string
         description: "Parameter 'county'"
-    headers:
-      - field: cookie
-        type: string
-        description: "Cookie field"
 
 extract_body:
   assign:
@@ -31,6 +28,7 @@ extract_body:
     chatId: ${incoming.body.chatId}
     authorId: ${incoming.body.authorId}
     county: ${incoming.body.input[0]}
+    year: ${new Date().getFullYear().toString()}
 
 checkForParams:
   switch:
@@ -41,53 +39,54 @@ checkForParams:
   next: getAll
 
 getWithCode:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
       id: "company-with-code"
-      params: { registry_code: "${registry_code}", field: "workers" }
+      params: { registry_code: "${registry_code}", field: "labor_taxes_and_payments" }
   result: res
   next: mapCodeData
 
 mapCodeData:
-  call: http.post
+  call: reflect.mock
   args:
-    url: "[#DMAPPER]/common-services/hbs/get_employees_with_code"
+    url: "[#DMAPPER]/common-services/hbs/get_work_force_taxes_with_code"
     headers:
       type: "json"
     body:
       hits: ${res.response.body.hits.hits}
+      year: ${year}
   result: codeMappedData
   next: checkMappedData
 
 checkMappedData:
   switch:
-    - condition: ${codeMappedData.response.body.employees.length > 0}
+    - condition: ${codeMappedData.response.body.work_force_taxes.length > 0}
       next: assign_code_response
   next: return_no_companies_found
 
 assign_code_response:
   assign:
-    res: ${codeMappedData.response.body.employees[0]}
-  next: format_messages
+    res: ${codeMappedData.response.body.work_force_taxes[0]}
+  next: format_messages  
 
 return_no_companies_found:
   return: "No companies found"
   next: end
 
 getWithCounty:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
       id: "companies-with-county"
-      params: { county: "${county}", field: "workers" }
+      params: { county: "${county}", field: "labor_taxes_and_payments" }
   result: res
   next: mapCountyData
 
 mapCountyData:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/get_total_with_county"
     headers:
@@ -100,20 +99,20 @@ mapCountyData:
 assign_county_response:
   assign:
     res: ${countyMappedData.response.body}
-  next: format_messages
+  next: format_messages  
 
 getAll:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
       id: "companies"
-      params: { field: "workers" }
+      params: { field: "labor_taxes_and_payments" }
   result: res
   next: mapAllData
 
 mapAllData:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/get_total"
     headers:
@@ -129,7 +128,7 @@ assign_response:
   next: format_messages
 
 format_messages:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
     headers:
@@ -146,6 +145,16 @@ format_messages:
           "created": "${new Date().toISOString()}",
         }
   result: formatted_messages_res
+  next: assignMock # return_result
 
 return_result:
   return: ${formatted_messages_res.response.body}
+
+assignMock:
+  assign:
+    res:
+      result: "MockCompany OÜ on 2024. aasta eelmisel kvartalil tasunud tööjõumakse kokku summas 74,999.66 eurot."
+  next: returnResult
+
+returnResult:
+  return: ${res}

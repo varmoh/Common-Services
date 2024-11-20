@@ -3,9 +3,9 @@ declaration:
   version: 0.1
   name: "MOCK - Member Participation Statistics Service"
   description: "MOCK - A service that provides participation statistics for Riigikogu members"
-  method: post
-  accepts: json
-  returns: json
+  method: POST
+  accepts: JSON
+  returns: JSON
   namespace: common-services
   allowlist:
     body:

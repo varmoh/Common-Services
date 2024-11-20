@@ -1,7 +1,8 @@
 declaration:
   call: declare
   version: 0.1
-  description: "Gets related persons of a business from the Business Register"
+  name: "MOCK - Company Related Persons"
+  description: "MOCK - Gets related persons of a business from the Business Register"
   method: POST
   accepts: JSON
   returns: JSON
@@ -14,30 +15,49 @@ declaration:
       - field: authorId
         type: string
         description: "Parameter 'authorId'"  
-      - field: message
-        type: string
-        description: "Registry code of the requested company"
-      - field: reg_code
-        type: string
+      - field: code
+        type: array
         description: "Registry code of the requested company"
 
 extract_body:
   assign:
-    message: ${incoming.body.input[0]}
     chatId: ${incoming.body.chatId}
     authorId: ${incoming.body.authorId}
+    code: ${incoming.body.input[0]}
+
 
 getRelatedPersons:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#XTR]/ar/ettevottegaSeotudIsikud_v1"
     body:
-      reg_code: "${message}"
+      reg_code: "${code}"
+    response:
+      ettevottegaSeotudIsikud_v1Response:
+        paring:
+          ariregistri_kood: "12345678"
+        keha:
+          seosed:
+            - isiku_tyyp: "J"
+              isiku_roll: "ORP"
+              isiku_roll_tekstina: "Osade registripidaja"
+              nimi_arinimi: "Mock Company SE"
+              valis_kood: "1234567890"
+              valis_kood_riik: "EST"
+              algus_kpv: "2017-01-01Z"
+            - isiku_tyyp: "F"
+              isiku_roll: "JUHL"
+              isiku_roll_tekstina: "Juhatuse liige"
+              eesnimi: "John"
+              nimi_arinimi: "Doe"
+              isikukood_registrikood: "12345678901"
+              algus_kpv: "2018-05-01Z"
+              lopp_kpv: "2020-12-31Z"
   result: relatedPersons
   next: mapRelatedPersons
 
 mapRelatedPersons:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/get-business-register-related-persons"
     headers:
@@ -53,7 +73,7 @@ assign_response:
   next: format_messages
 
 format_messages:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/filter-company-related-persons"
     headers:
@@ -70,6 +90,17 @@ format_messages:
           "created": "${new Date().toISOString()}",
         }
   result: formatted_messages_res
+  next: assignMock # return_result
 
 return_result:
   return: ${formatted_messages_res.response.body}
+#-----------------------------------------------------------------------------
+
+assignMock:
+  assign:
+    res: 
+      result: "Osade registripidaja:\nGlobal CSD Inc.\n\nJuhatuse liige:\nJohn Doe (12345678901)\n\nAsutaja:\nJane Smith (23456789012)\n\nOsanik:\nAlice Johnson (34567890123)\n\nTegelik kasusaaja:\nBob Brown (45678901234)"
+  next: returnResult
+
+returnResult:
+  return: ${res}

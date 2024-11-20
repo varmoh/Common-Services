@@ -1,29 +1,25 @@
 declaration:
   call: declare
   version: 0.1
-  description: "Gets Companies Employees"
+  description: "Gets Companies Revenues"
   method: POST
   accepts: JSON
   returns: JSON
   namespace: common-services
   allowlist:
-    body:
+    params:
       - field: chatId
         type: string
         description: "Parameter 'chatId'"
       - field: authorId
         type: string
-        description: "Parameter 'authorId'"  
+        description: "Parameter 'authorId'"    
       - field: registry_code
         type: string
         description: "Parameter 'registry_code'"
       - field: county
         type: string
         description: "Parameter 'county'"
-    headers:
-      - field: cookie
-        type: string
-        description: "Cookie field"
 
 extract_body:
   assign:
@@ -31,6 +27,7 @@ extract_body:
     chatId: ${incoming.body.chatId}
     authorId: ${incoming.body.authorId}
     county: ${incoming.body.input[0]}
+    year: ${new Date().getFullYear().toString()}
 
 checkForParams:
   switch:
@@ -41,35 +38,36 @@ checkForParams:
   next: getAll
 
 getWithCode:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
       id: "company-with-code"
-      params: { registry_code: "${registry_code}", field: "workers" }
+      params: { registry_code: "${registry_code}", field: "turnover" }
   result: res
   next: mapCodeData
 
 mapCodeData:
-  call: http.post
+  call: reflect.mock
   args:
-    url: "[#DMAPPER]/common-services/hbs/get_employees_with_code"
+    url: "[#DMAPPER]/common-services/hbs/get_revenue_with_code"
     headers:
       type: "json"
     body:
       hits: ${res.response.body.hits.hits}
+      year: ${year}
   result: codeMappedData
   next: checkMappedData
 
 checkMappedData:
   switch:
-    - condition: ${codeMappedData.response.body.employees.length > 0}
+    - condition: ${codeMappedData.response.body.revenue.length > 0}
       next: assign_code_response
   next: return_no_companies_found
 
 assign_code_response:
   assign:
-    res: ${codeMappedData.response.body.employees[0]}
+    res: ${codeMappedData.response.body.revenue[0]}
   next: format_messages
 
 return_no_companies_found:
@@ -77,17 +75,17 @@ return_no_companies_found:
   next: end
 
 getWithCounty:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
       id: "companies-with-county"
-      params: { county: "${county}", field: "workers" }
+      params: { county: "${county}", field: "turnover" }
   result: res
   next: mapCountyData
 
 mapCountyData:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/get_total_with_county"
     headers:
@@ -96,24 +94,24 @@ mapCountyData:
       aggregations: ${res.response.body.aggregations}
   result: countyMappedData
   next: assign_county_response
-
+ 
 assign_county_response:
   assign:
     res: ${countyMappedData.response.body}
   next: format_messages
 
 getAll:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#OPENSEARCH]/companies/_search/template"
     body:
       id: "companies"
-      params: { field: "workers" }
+      params: { field: "turnover" }
   result: res
   next: mapAllData
 
 mapAllData:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/get_total"
     headers:
@@ -129,7 +127,7 @@ assign_response:
   next: format_messages
 
 format_messages:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/bot_responses_to_messages"
     headers:
@@ -146,6 +144,17 @@ format_messages:
           "created": "${new Date().toISOString()}",
         }
   result: formatted_messages_res
+  next: assignMock # return_result
 
 return_result:
   return: ${formatted_messages_res.response.body}
+  
+#---------------------------------------------------------------------------------------------
+assignMock:
+  assign:
+    res:
+      result: "MockCompany OÜ käive 2024. aasta eelmisel kvartalil 229,507.61 eurot"
+  next: returnResult
+
+returnResult: 
+  return: ${res}

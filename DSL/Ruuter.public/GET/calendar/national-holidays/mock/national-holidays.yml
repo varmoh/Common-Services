@@ -3,9 +3,9 @@ declaration:
   version: 0.1
   name: "MOCK - All Holiday's Data Service"
   description: "MOCK - Returns all national holidays in Estonia for the year 2024"
-  method: get
-  accepts: json
-  returns: json
+  method: GET
+  accepts: JSON
+  returns: JSON
   allowlist:
     body:
     - field: chatId

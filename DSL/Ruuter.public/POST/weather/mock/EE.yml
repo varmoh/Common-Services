@@ -2,8 +2,8 @@ declaration:
   call: declare
   version: 1.0.0
   description: "MOCK - Gets weather information for locations in EE - estonia"
-  method: post
-  returns: json
+  method: POST
+  returns: JSON
   namespace: common-services
 
 # Assigns key variables for processing the request, including API endpoints.

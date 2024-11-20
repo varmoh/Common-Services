@@ -1,9 +1,9 @@
 declaration:
   name: "MOCK - Filter by Month"
   description: "MOCK - Fetches and filters Estonian national holidays for a specified month in 2024"
-  method: get
-  accepts: json
-  returns: json
+  method: GET
+  accepts: JSON
+  returns: JSON
   namespace: common-services
   allowlist:
     body:

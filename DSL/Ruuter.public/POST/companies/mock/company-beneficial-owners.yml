@@ -1,7 +1,8 @@
 declaration:
   call: declare
   version: 0.1
-  description: "Gets beneficial owners of a business from the Business Register"
+  name: "MOCK - Company Beneficial Owners"
+  description: "MOCK - Gets beneficial owners of a business from the Business Register"
   method: POST
   accepts: JSON
   returns: JSON
@@ -13,38 +14,49 @@ declaration:
         description: "Parameter 'chatId'"
       - field: authorId
         type: string
-        description: "Parameter 'authorId'"  
-      - field: message
-        type: string
+        description: "Parameter 'authorId'"
+      - field: code
+        type: array
         description: "Registry code of the requested company"
-      - field: reg_code
-        type: string
-        description: "Registry code of the requested company"
-      - field: username
-        type: string
-        description: "X-Road API username"
-      - field: password
-        type: string
-        description: "X-Road API password"
 
 extract_body:
   assign:
-    message: ${incoming.body.input[0]}
     chatId: ${incoming.body.chatId}
     authorId: ${incoming.body.authorId}
+    code: ${incoming.body.input[0]}
+  next: getBeneficialOwnersData
 
 getBeneficialOwnersData:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#XTR]/ar/tegelikudKasusaajad_v2"
     body:
-      reg_code: "${message}" 
+      reg_code: "${code}" 
       username: "[#XTR_AR_USERNAME]" 
       password: "[#XTR_AR_PASSWORD]"
+    response:
+      tegelikudKasusaajad_v2Response:
+        paring:
+          ariregister_kasutajanimi: "KASUTAJA"
+        keha:
+          kasusaajad:
+            kasusaajate_arv_kokku: "1"
+            peidetud_kasusaajate_arv: "0"
+            lahknevusteade_puudumisest: "false"
+            kasusaaja:
+              kirje_id: "9001567616"
+              eesnimi: "Puur"
+              nimi: "Aidur"
+              isikukood: "34305246021"
+              aadress_riik: "EST"
+              algus_kpv: "2023-05-03Z"
+              lahknevusteade_esitatud: "false"
+          esitab_kasusaajad: "true"
   result: beneficialOwnersData
-  
+  next: mapBeneficialOwnersData
+
 mapBeneficialOwnersData:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/get-business-register-beneficial-owners"
     headers:
@@ -60,7 +72,7 @@ assign_response:
   next: format_messages
 
 format_messages:
-  call: http.post
+  call: reflect.mock
   args:
     url: "[#DMAPPER]/common-services/hbs/filter-beneficiaries-related-information-for-business-register"
     headers:
@@ -77,6 +89,17 @@ format_messages:
           "created": "${new Date().toISOString()}",
         }
   result: formatted_messages_res
+  next: assignMock # return_result
 
 return_result:
   return: ${formatted_messages_res.response.body}
+#------------------------------------------------------------------------------------------------
+
+assignMock:
+  assign:
+    res:
+      result: "otsene osalus:\nPuur Aidur (38011160325) (Eesti)\n\nkõrgema juhtorgani liige. s.o juhatuse liige või nõukogu liige:\nTõnut Õukeratas (38309314715) (Eesti)"
+  next: returnResult
+
+returnResult:
+  return: ${res}

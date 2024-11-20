@@ -3,9 +3,9 @@ declaration:
   version: 0.1
   name: "Find Upcoming Holiday"
   description: "Returns the next upcoming national holiday from today's date"
-  method: get
-  accepts: json
-  returns: json
+  method: GET
+  accepts: JSON
+  returns: JSON
   allowlist:
     body:
     - field: chatId

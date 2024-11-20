@@ -3,9 +3,9 @@ declaration:
   version: 0.1
   name: "MOCK - Electricity Highest Price Service"
   description: "MOCK - This service fetches the Elering electricity prices for a user-specified date and returns the highest price"
-  method: post
-  accepts: json
-  returns: json
+  method: POST
+  accepts: JSON
+  returns: JSON
   namespace: common-services
   allowlist:
     body:
