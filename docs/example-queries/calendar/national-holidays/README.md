@@ -19,15 +19,17 @@ authorId: "${incoming.params.authorId}"
 
 Endpoints
 ```
-calendar/national-holidays/eoy			        # current day → end of year,                  no params
-calendar/national-holidays/national-holidays	# all national holidays,                      no params
-calendar/national-holidays/next			        # current day → next holiday,                 no params
-calendar/national-holidays/previous			    # current day → previous nearest holiday,     no params
-calendar/national-holidays/today			    # is today a national holiday?,               no params
-calendar/national-holidays/ytd			        # january → currentMonth,                     no params
+| Endpoint                                             | Description                                        | Parameters                                        |
+|------------------------------------------------------|----------------------------------------------------|---------------------------------------------------|
+| `calendar/national-holidays/eoy`                     | Current day → end of year                          | No parameters                                     |
+| `calendar/national-holidays/national-holidays`       | All national holidays                              | No parameters                                     |
+| `calendar/national-holidays/next`                    | Current day → next holiday                         | No parameters                                     |
+| `calendar/national-holidays/previous`                | Current day → previous nearest holiday             | No parameters                                     |
+| `calendar/national-holidays/today`                   | Is today a national holiday?                       | No parameters                                     |
+| `calendar/national-holidays/ytd`                     | January → current month                            | No parameters                                     |
+| `calendar/national-holidays/find/by-name`            | Find holiday by name                               | Accepts `incoming.params.input` (e.g. “jaanipäev”) |
+| `calendar/national-holidays/find/by-month`           | Find holidays by month                             | Accepts `incoming.params.input` (e.g. “juuni”)    |
 
-calendar/national-holidays/find/by-name		    # accepts params (e.g. incoming.params.input = “jaanipäev”)
-calendar/national-holidays/find/by-month		# accepts params (e.g. incoming.params.input = “juuni”)
 ```
 
 # * eoy
