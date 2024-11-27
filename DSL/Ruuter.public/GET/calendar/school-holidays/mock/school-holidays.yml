@@ -1,0 +1,17 @@
+declaration:
+  call: declare
+  version: 0.1
+  name: "School Holidays"
+  description: "All school holidays, current year, in Estonia - Mis on selle aasta koolivaheajad?"
+  method: GET
+  accepts: JSON
+  returns: JSON
+  namespace:  common-services
+  allowlist:
+    body:
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
