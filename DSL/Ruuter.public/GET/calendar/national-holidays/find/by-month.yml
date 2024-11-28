@@ -1,15 +1,11 @@
 declaration:
-  name: "Filter by Month"
-  description: "Fetches and filters Estonian national holidays for a specified month in 2024"
-  params:
-    - chatId: "The chat ID for the message - string"
-    - authorId: "The author ID for the message- string"
-    - month: "The month for which to retrieve holidays - string - ex. 'mai' or 'veebruar'"
-
+  call: declare
+  version: 0.1
+  name: "By Month"
+  description: "Searches for holidays by month name"
   method: GET
   accepts: JSON
   returns: JSON
-  namespace: common-services
   allowlist:
     body:
     - field: chatId
@@ -18,84 +14,57 @@ declaration:
     - field: authorId
       type: string
       description: "The author ID for the message"
-    - field: month
+    - field: monthName
       type: string
-      description: "The incoming month for which to retrieve holidays - ex. 'mai' or 'veebruar'"
+      description: "The month name to search for"
 
 prepare:
   assign:
-    chatId: "${incoming.params.chatId}"
-    authorId: "${incoming.params.authorId}"
-    month: "${incoming.params.input.split(',')[0]}"
+    chatId: ${incoming.params.chatId}
+    authorId: ${incoming.params.authorId}
+    monthName: ${incoming.params.input}
+    currentYear: ${Math.floor(new Date().getFullYear())}
     monthMap:
       map:
-        "jaanuar": "01"
-        "veebruar": "02"
-        "märts": "03"
-        "aprill": "04"
-        "mai": "05"
-        "juuni": "06"
-        "juuli": "07"
-        "august": "08"
-        "september": "09"
-        "oktoober": "10"
-        "november": "11"
-        "detsember": "12"
-  next: prepareMonth
+        "jaanuar": 0
+        "veebruar": 1
+        "märts": 2
+        "aprill": 3
+        "mai": 4
+        "juuni": 5
+        "juuli": 6
+        "august": 7
+        "september": 8
+        "oktoober": 9
+        "november": 10
+        "detsember": 11
+  next: prepareDates
 
-prepareMonth:
+prepareDates:
   assign:
-    month: ${monthMap.map[month]}
+    monthIndex: ${monthMap.map[monthName]}
+    startDate: ${(new Date(currentYear, monthIndex, 1)).toISOString().split('T')[0]}
+    endDate: ${(new Date(currentYear, monthIndex + 1, 0)).toISOString().split('T')[0]}
   next: makeApiCall
 
 makeApiCall:
-  call: reflect.mock
+  call: http.get
   args:
-    url: "www.example.com"
-    response: 
-      holidays:
-        # --- Riigipühad ja puhkepäevad 2024 ---
-        - date: "2024-01-01"
-          name: "uusaasta"
-        - date: "2024-02-24"
-          name: "iseseisvuspäev, Eesti Vabariigi aastapäev"
-        - date: "2024-03-29"
-          name: "suur reede"
-        - date: "2024-03-31"
-          name: "ülestõusmispühade 1. püha"
-        - date: "2024-05-01"
-          name: "kevadpüha"
-        - date: "2024-05-19"
-          name: "nelipühade 1. püha"
-        - date: "2024-06-23"
-          name: "võidupüha"
-        - date: "2024-06-24"
-          name: "jaanipäev"
-        - date: "2024-08-20"
-          name: "taasiseseisvumispäev"
-        - date: "2024-12-24"
-          name: "jõululaupäev"
-        - date: "2024-12-25"
-          name: "esimene jõulupüha"
-        - date: "2024-12-26"
-          name: "teine jõulupüha"
-  result: holidayData
-  next: filterHolidays
+    url: https://openholidaysapi.org/PublicHolidays?countryIsoCode=EE&languageIsoCode=EE&validFrom=${startDate}&validTo=${endDate}
+    headers:
+      accept: application/json
+  result: holidays
+  next: checkHoliday
 
-filterHolidays:
-  assign:
-    holidays: ${holidayData.response.body.holidays.filter(holiday => holiday.date.slice(5, 7) === month.padStart(2, '0'))}
-  next: checkHolidays
-
-#--------------------------------------------------------------------------------------------------
-checkHolidays:
+checkHoliday:
   switch:
-    - condition: ${holidays.length < 1}
+    - condition: ${holidays.response.body.length == 0}
       next: holidayNotFound
-    - condition: ${holidays.length === 1}
+    - condition: ${holidays.response.body.length == 1}
       next: formatSingleResponse
-    - condition: ${holidays.length > 1}
-      next: formatValue
+    - condition: ${holidays.response.body.length > 1}
+      next: formatMultipleResponses
+  next: holidayNotFound
 
 holidayNotFound:
   assign:
@@ -111,39 +80,26 @@ formatSingleResponse:
     headers:
       type: json
     body:
-      data: {
-        "name": "${holidays[0].name}",
-        "date": "${holidays[0].date}"
-      }
-  result: formatSingleResponse
-  next: assignSingleValue
+      data: ${holidays.response.body}
+  result: formattedHolidays
+  next: assignResponse
 
-assignSingleValue:
-  assign:
-    res: ${formatSingleResponse.response.body}
-  next: formatMessages
-
-formatValue:
+formatMultipleResponses:
   call: http.post
   args:
     url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holiday_by_month"
     headers:
       type: json
     body:
-      data: {
-        "date": "${holidays[0].date}",
-        "holidays": "${holidays}"
-      }
-  result: holiday
+      data: ${holidays.response.body}
+  result: formattedHolidays
   next: assignResponse
 
-#--------------------------------------------------------------------------------------------------
 assignResponse:
   assign:
-    res: ${holiday.response.body}
+    res: ${formattedHolidays.response.body}
   next: formatMessages
 
-# format throgh DM bot response to messages
 formatMessages:
   call: http.post
   args:

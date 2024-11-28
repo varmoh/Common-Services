@@ -1,7 +1,7 @@
 declaration:
   call: declare
   version: 0.1
-  name: "Find Holidays Until End of Year"
+  name: "EOY - End of Year"
   description: "Returns all holidays from today till the end of the year"
   method: GET
   accepts: JSON
@@ -14,74 +14,54 @@ declaration:
     - field: authorId
       type: string
       description: "The author ID for the message"
-    - field: today
-      type: string
-      description: "The current date in ISO format - ex. 'yyyy-mm-dd'"
-    - field: yearEnd
-      type: string
-      description: "The end of the year in ISO format - ex. 'yyyy-mm-dd'"
 
 prepare:
   assign:
     chatId: ${incoming.params.chatId}
     authorId: ${incoming.params.authorId}
-    today: ${new Date().toISOString().split("T")[0]}
-    yearEnd: ${today.split("-")[0] + "-12-31"}
+    startDate: ${new Date().toISOString().split("T")[0]}
+    endDate: ${startDate.split("-")[0] + "-12-31"}
   next: makeApiCall
 
 makeApiCall:
-  call: reflect.mock
+  call: http.get
   args:
-    url: "www.example.com"
-    response: 
-      holidays:
-        # --- Riigipühad ja puhkepäevad 2024 ---
-        - date: "2024-01-01"
-          name: "uusaasta"
-        - date: "2024-02-24"
-          name: "iseseisvuspäev, Eesti Vabariigi aastapäev"
-        - date: "2024-03-29"
-          name: "suur reede"
-        - date: "2024-03-31"
-          name: "ülestõusmispühade 1. püha"
-        - date: "2024-05-01"
-          name: "kevadpüha"
-        - date: "2024-05-19"
-          name: "nelipühade 1. püha"
-        - date: "2024-06-23"
-          name: "võidupüha"
-        - date: "2024-06-24"
-          name: "jaanipäev"
-        - date: "2024-08-20"
-          name: "taasiseseisvumispäev"
-        - date: "2024-12-24"
-          name: "jõululaupäev"
-        - date: "2024-12-25"
-          name: "esimene jõulupüha"
-        - date: "2024-12-26"
-          name: "teine jõulupüha"
-  result: holidayData
-  next: validateHolidaysEOY
+    url: https://openholidaysapi.org/PublicHolidays?countryIsoCode=EE&languageIsoCode=EE&validFrom=${startDate}&validTo=${endDate}
+    headers:
+      accept: application/json
+  result: holidays
+  next: filterHolidays
 
-validateHolidaysEOY:
+filterHolidays:
   assign:
-    holidaysEOY: ${holidayData.response.body.holidays
-        .filter(holiday => holiday.date >= today && holiday.date <= yearEnd)
-        .sort((a, b) => new Date(a.date) - new Date(b.date))}
-  next: formatResult
+    eoyHolidays: ${holidays.response.body.filter(holiday => holiday.startDate >= startDate)}
+  next: checkEoyHolidays
 
-formatResult:
+checkEoyHolidays:
+  switch:
+    - condition: ${eoyHolidays.length === 0}
+      next: assignNoHolidays
+  next: formatHolidays
+
+assignNoHolidays:
+  assign:
+    res: {
+      "result": "Sel aastal rohkem riigipühi ei ole"
+    }
+  next: formatMessages
+
+formatHolidays:
   call: http.post
   args:
     url: "[#DMAPPER]/common-services/hbs/calendar/national-holidays/get_national_holiday_eoy"
-    headers:
+    headers:  
       type: json
     body:
-      data: ${holidaysEOY}
+      data: ${eoyHolidays}
   result: formattedHolidays
-  next: assignResponse
+  next: assignResult
 
-assignResponse:
+assignResult:
   assign:
     res: ${formattedHolidays.response.body}
   next: formatMessages

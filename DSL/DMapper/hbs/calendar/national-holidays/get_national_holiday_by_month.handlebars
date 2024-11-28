@@ -1,3 +1,3 @@
 {
-  "result": "{{formatDateToEstonian data.date true}} on järgmised riigipühad: \\n\\n{{#each data.holidays}}**{{formatDateToEstonian date}}**\\n {{name}}\\n\\n{{/each}}"
+    "result": "{{formatDateToEstonian data.[0].startDate true}} on järgmised riigipühad: \\n\\n{{#each data}}{{formatDate startDate}} - {{name.[0].text}}{{#unless @last}}\\n{{/unless}}{{/each}}"
 }

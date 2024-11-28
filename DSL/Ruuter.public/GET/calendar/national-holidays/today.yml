@@ -1,86 +1,54 @@
 declaration:
   call: declare
   version: 0.1
-  name: "Check Today's Holiday"
-  description: "This service checks if today is a national holiday"
+  name: "Today"
+  description: "Checks if today is a national holiday"
   method: GET
   accepts: JSON
   returns: JSON
+  namespace: common-services
   allowlist:
     body:
-    - field: chatId
-      type: string
-      description: "The chat ID for the message"
-    - field: authorId
-      type: string
-      description: "The author ID for the message"
-    - field: today
-      type: string
-      description: "The current date in ISO format - ex. 'yyyy-mm-dd'"
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
 
 prepare:
   assign:
     chatId: ${incoming.params.chatId}
     authorId: ${incoming.params.authorId}
-    today: ${new Date().toISOString().split("T")[0]}
+    startDate: ${new Date().toISOString().split("T")[0]}
   next: makeApiCall
 
 makeApiCall:
-  call: reflect.mock
+  call: http.get
   args:
-    url: "www.example.com"
-    response: 
-      holidays:
-        # --- Riigipühad ja puhkepäevad 2024 ---
-        - date: "2024-01-01"
-          name: "uusaasta"
-        - date: "2024-02-24"
-          name: "iseseisvuspäev, Eesti Vabariigi aastapäev"
-        - date: "2024-03-29"
-          name: "suur reede"
-        - date: "2024-03-31"
-          name: "ülestõusmispühade 1. püha"
-        - date: "2024-05-01"
-          name: "kevadpüha"
-        - date: "2024-05-19"
-          name: "nelipühade 1. püha"
-        - date: "2024-06-23"
-          name: "võidupüha"
-        - date: "2024-06-24"
-          name: "jaanipäev"
-        - date: "2024-08-20"
-          name: "taasiseseisvumispäev"
-        - date: "2024-12-24"
-          name: "jõululaupäev"
-        - date: "2024-12-25"
-          name: "esimene jõulupüha"
-        - date: "2024-12-26"
-          name: "teine jõulupüha"
-  result: holidayData
-  next: validateHoliday
-
-validateHoliday:
-  assign:
-    holiday: ${holidayData.response.body.holidays.find(holiday => holiday.date === today)}
+    url: https://openholidaysapi.org/PublicHolidays?countryIsoCode=EE&languageIsoCode=EE&validFrom=${startDate}&validTo=${startDate}
+    headers:
+      accept: application/json
+  result: holiday
   next: checkHoliday
 
 checkHoliday:
   switch:
-    - condition: ${!holiday}
-      next: holidayNotFound
-  next: formatValue
+    - condition: ${holiday.response.body.length == 0}
+      next: assignNotFound
+  next: assignResult
 
-holidayNotFound:
+assignNotFound:
   assign:
     res: {
       "result": "Täna ei ole riigipüha."
     }
   next: formatMessages
 
-formatValue:
+assignResult:
   assign:
     res: {
-      "result": "Täna on ${holiday.name}"
+      "result": "Jah, täna on ${holiday.name}"
     }
   next: formatMessages
 

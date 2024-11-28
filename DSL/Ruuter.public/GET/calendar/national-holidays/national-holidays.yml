@@ -1,58 +1,37 @@
 declaration:
   call: declare
   version: 0.1
-  name: "All Holiday's Data Service"
-  description: "Returns all national holidays in Estonia for the year 2024"
+  name: "Natioanl Holidays"
+  description: "Provides all National holidays for the current year"
   method: GET
   accepts: JSON
   returns: JSON
+  namespace: common-services
   allowlist:
     body:
-    - field: chatId
-      type: string
-      description: "The chat ID for the message"
-    - field: authorId
-      type: string
-      description: "The author ID for the message"
+      - field: chatId
+        type: string
+        description: "The chat ID for the message"
+      - field: authorId
+        type: string
+        description: "The author ID for the message"
 
 prepare:
   assign:
     chatId: ${incoming.params.chatId}
     authorId: ${incoming.params.authorId}
+    currentYear: ${new Date().toISOString().split("T")[0].slice(0,4)}
+    startDate: ${currentYear + "-01-01"}
+    endDate: ${currentYear + "-12-31"}
   next: makeApiCall
 
 makeApiCall:
-  call: reflect.mock
+  call: http.get
   args:
-    url: "www.example.com"
-    response: 
-      holidays:
-        # --- Riigipühad ja puhkepäevad 2024 ---
-        - date: "2024-01-01"
-          name: "uusaasta"
-        - date: "2024-02-24"
-          name: "iseseisvuspäev, Eesti Vabariigi aastapäev"
-        - date: "2024-03-29"
-          name: "suur reede"
-        - date: "2024-03-31"
-          name: "ülestõusmispühade 1. püha"
-        - date: "2024-05-01"
-          name: "kevadpüha"
-        - date: "2024-05-19"
-          name: "nelipühade 1. püha"
-        - date: "2024-06-23"
-          name: "võidupüha"
-        - date: "2024-06-24"
-          name: "jaanipäev"
-        - date: "2024-08-20"
-          name: "taasiseseisvumispäev"
-        - date: "2024-12-24"
-          name: "jõululaupäev"
-        - date: "2024-12-25"
-          name: "esimene jõulupüha"
-        - date: "2024-12-26"
-          name: "teine jõulupüha"
-  result: holidayData
+    url: https://openholidaysapi.org/PublicHolidays?countryIsoCode=EE&languageIsoCode=EE&validFrom=${startDate}&validTo=${endDate}
+    headers:
+      accept: application/json
+  result: holidays
   next: formatResult
 
 formatResult:
@@ -62,7 +41,7 @@ formatResult:
     headers:
       type: json
     body:
-      data: ${holidayData.response.body.holidays}
+      data: ${holidays.response.body}
   result: formattedHolidays
   next: assignResponse
   

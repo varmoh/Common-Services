@@ -1,3 +1,3 @@
 {
-  "result": "Kõik riigipühad käesoleval aastal on:\\n\\n{{#each data}} {{formatDate this.date}} - {{this.name}}\\n{{/each}}"
+  "result": "Kõik riigipühad käesoleval aastal on:\\n\\n{{#each data}} {{formatDate this.startDate}} - {{this.name.[0].text}}{{#unless @last}}\\n{{/unless}}{{/each}}"
 }
