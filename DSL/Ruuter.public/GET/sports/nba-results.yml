@@ -19,7 +19,7 @@ fetchNbaResults:
   args:
     url: "https://api.balldontlie.io/v1/games?start_date=${yesterdayDate}&end_date=${yesterdayDate}"
     headers:
-      Authorization: "542424b7-e227-4794-9099-dc7c50acea92"
+      Authorization: "[#NBA_API_KEY]"
   result: nbaApiResponse
   next: formatResults
 
